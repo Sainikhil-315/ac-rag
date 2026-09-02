@@ -1,0 +1,57 @@
+# AC-RAG — Python dependencies (pinned to latest verified versions)
+
+# LangChain ecosystem
+langchain>=0.3.28
+langchain-core>=0.3.83
+langchain-community>=0.3.31
+langchain-text-splitters>=0.3.11
+langgraph>=0.6.11
+
+# LLM providers (install all four; activate one via LLM_PROVIDER in settings.py)
+langchain-openai>=0.3.35         # LLM_PROVIDER = "openai"
+langchain-google-genai>=2.1.12   # LLM_PROVIDER = "google"
+langchain-anthropic>=0.3.14      # LLM_PROVIDER = "anthropic"
+langchain-groq>=0.2.0            # LLM_PROVIDER = "groq" — was missing despite being a
+                                  # documented supported provider with get_llm() code
+                                  # for it (utils/llm_factory.py) and a real GROQ_API_KEY
+                                  # already configured in .env
+
+# Raw SDK clients
+openai>=2.26.0
+google-generativeai>=0.8.5
+anthropic>=0.49.0
+
+# Vector stores
+faiss-cpu>=1.13.0
+chromadb>=1.5.5
+
+# Embeddings
+sentence-transformers>=5.1.2     # local embeddings (all-MiniLM-L6-v2)
+
+# Document loaders
+pymupdf>=1.26.5          # PDF — fast, page-level metadata
+docx2txt>=0.8            # DOCX
+unstructured>=0.16.0     # HTML, Markdown
+beautifulsoup4>=4.14.3
+pdfplumber>=0.11.0       # PDF table structure extraction (ingestion/table_extractor.py)
+
+# Evaluation
+rouge-score>=0.1.2       # ROUGE-L metric
+
+# Utilities
+python-dotenv>=1.2.1
+pydantic>=2.12.5
+tiktoken>=0.12.0         # token counting
+numpy>=2.0.1             # cosine similarity scoring
+scipy>=1.18.0            # paired significance tests over ablation results
+
+# React + FastAPI backend
+fastapi>=0.115.0
+uvicorn[standard]>=0.39.0
+python-multipart>=0.0.20
+
+# Streamlit UI (legacy, replaced by React frontend)
+streamlit>=1.45.0
+
+# Testing
+pytest>=8.3.0

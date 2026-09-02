@@ -1,0 +1,29 @@
+# ── Secrets ───────────────────────────────────────────────────────
+.env
+
+# ── Vector store index (large binary files) ──────────────────────
+vectorstore/index/
+
+# ── Raw documents (may be proprietary) ───────────────────────────
+data/raw/
+data/processed/
+
+# ── Logs ──────────────────────────────────────────────────────────
+logs/
+
+# ── Evaluation results ────────────────────────────────────────────
+evaluation/results/
+
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+node_modules/
+frontend/dist/
+
+# ── Environments ──────────────────────────────────────────────────
+.venv/
+venv/
+env/

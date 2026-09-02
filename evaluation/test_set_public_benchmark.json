@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "question": "What are two basic primary resources used to guage complexity?",
+    "answer": "time and storage",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 2,
+    "question": "The traveling salesman problem is an example of what type of problem?",
+    "answer": "A function problem",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 3,
+    "question": "What is the name given to the input string of a computational problem?",
+    "answer": "problem instance",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 4,
+    "question": "What does computational complexity theory most specifically seek to answer?",
+    "answer": "computational problems",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 5,
+    "question": "What is another name for any given measure of input associated with a problem?",
+    "answer": "instances",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 6,
+    "question": "What field of computer science analyzes all possible algorithms in aggregate to determine the resource requirements needed to solve to a given problem?",
+    "answer": "computational complexity theory",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 7,
+    "question": "What kind of graph is an example of an input used in a decision problem?",
+    "answer": "arbitrary graph",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 8,
+    "question": "What is the name of the alphabet is most commonly used in a problem instance?",
+    "answer": "binary alphabet",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 9,
+    "question": "What two fields of theoretical computer science closely mirror computational complexity theory?",
+    "answer": "analysis of algorithms and computability theory",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 10,
+    "question": "What field of computer science is primarily concerned with determining the likelihood of whether or not a problem can ultimately be solved using algorithms?",
+    "answer": "computability theory",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 11,
+    "question": "If two integers are multiplied and output a value, what is this expression set called?",
+    "answer": "set of triples",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 12,
+    "question": "What branch of theoretical computer science deals with broadly classifying computational problems by difficulty and class of relationship?",
+    "answer": "Computational complexity theory",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 13,
+    "question": "What will the output be for a member of the language of a decision problem?",
+    "answer": "yes",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 14,
+    "question": "Is a problem instance typically characterized as abstract or concrete?",
+    "answer": "concrete",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 15,
+    "question": "How can function problems typically be restated?",
+    "answer": "decision problems",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 16,
+    "question": "What is one example of an instance that the quantitative answer to the traveling salesman problem fails to answer?",
+    "answer": "round trip through all sites in Milan",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 17,
+    "question": "What is another term for the string of a problem instance?",
+    "answer": "bitstrings",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 18,
+    "question": "What is the term for the set of all connected graphs related to this decision problem?",
+    "answer": "formal language",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 19,
+    "question": "What are the two integer responses to a decision problem?",
+    "answer": "1 or 0",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 20,
+    "question": "What is one way in which graphs can be encoded?",
+    "answer": "adjacency matrices",
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": true
+  },
+  {
+    "id": 21,
+    "question": "What is one example of an instance that the qualitative answer to the traveling salesman fails to answer?",
+    "answer": null,
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": false
+  },
+  {
+    "id": 22,
+    "question": "What is the term for the set of all unconnected graphs related to this decision problem?",
+    "answer": null,
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": false
+  },
+  {
+    "id": 23,
+    "question": "What process classifies problems that can and cannot be solved with approximately unlimited resources?",
+    "answer": null,
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": false
+  },
+  {
+    "id": 24,
+    "question": "What can be viewed as a limited collection of instances together with a solution for every instance?",
+    "answer": null,
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": false
+  },
+  {
+    "id": 25,
+    "question": "What are two fields of theoretical computer science that closely mirror computational simplicity theory?",
+    "answer": null,
+    "type": "factual",
+    "source": "SQuAD-v2.0",
+    "answerable": false
+  }
+]

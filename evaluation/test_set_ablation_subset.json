@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "question": "What are the two main failures of traditional RAG systems mentioned in the paper?",
+    "answer": "Fixed retrieval depth regardless of query complexity and lack of comparison between generated responses and retrieved evidence.",
+    "type": "factual"
+  },
+  {
+    "id": 4,
+    "question": "Does AC-RAG require model fine-tuning?",
+    "answer": "No, it operates without fine-tuning.",
+    "type": "factual"
+  },
+  {
+    "id": 7,
+    "question": "What is the retrieval range (k)?",
+    "answer": "Between 4 and 12 passages.",
+    "type": "factual"
+  },
+  {
+    "id": 10,
+    "question": "What is the purpose of the query understanding stage?",
+    "answer": "To rewrite the query, identify intent and complexity, and decompose complex queries into sub-queries.",
+    "type": "factual"
+  },
+  {
+    "id": 20,
+    "question": "What is the maximum number of retries allowed?",
+    "answer": "Three retries.",
+    "type": "factual"
+  },
+  {
+    "id": 23,
+    "question": "What chunk overlap is used?",
+    "answer": "100 characters.",
+    "type": "factual"
+  },
+  {
+    "id": 26,
+    "question": "Which model is used for answer generation?",
+    "answer": "GPT-4o.",
+    "type": "factual"
+  },
+  {
+    "id": 29,
+    "question": "How many QA pairs were used in evaluation?",
+    "answer": "50 question-answer pairs.",
+    "type": "factual"
+  },
+  {
+    "id": 37,
+    "question": "What is the limitation of the evaluation dataset?",
+    "answer": "It contains only 50 QA pairs, limiting generalizability.",
+    "type": "factual"
+  },
+  {
+    "id": 11,
+    "question": "How does AC-RAG adjust retrieval depth?",
+    "answer": "It dynamically adjusts retrieval depth based on query complexity, retrieving more passages for complex queries and fewer for simple ones.",
+    "type": "analytical"
+  },
+  {
+    "id": 13,
+    "question": "What happens if insufficient valid passages remain after validation?",
+    "answer": "The system retries retrieval planning with adjusted parameters.",
+    "type": "analytical"
+  },
+  {
+    "id": 15,
+    "question": "What is the role of self-reflection in AC-RAG?",
+    "answer": "It evaluates answers across five dimensions and decides whether to accept, regenerate, or retry.",
+    "type": "analytical"
+  },
+  {
+    "id": 19,
+    "question": "What happens when formatting issues are detected?",
+    "answer": "The answer is regenerated using the same context.",
+    "type": "analytical"
+  },
+  {
+    "id": 32,
+    "question": "How did hallucination reduction improve?",
+    "answer": "From 0.58 in baseline to 0.85 in AC-RAG.",
+    "type": "analytical"
+  },
+  {
+    "id": 35,
+    "question": "Which component contributed most to performance improvement?",
+    "answer": "Self-reflection.",
+    "type": "analytical"
+  }
+]

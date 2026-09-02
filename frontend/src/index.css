@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Color tokens (light) ─────────────────────────────────────────── */
+:root {
+  --c-bg:          #F4F4F5;
+  --c-surface:     #FFFFFF;
+  --c-surface-2:   #FAFAFA;
+  --c-border:      #E4E4E7;
+  --c-border-in:   #F4F4F5;
+  --c-text:        #18181B;
+  --c-text-2:      #3F3F46;
+  --c-text-sec:    #71717A;
+  --c-text-muted:  #A1A1AA;
+  --c-text-faint:  #D4D4D8;
+  --c-accent:      #6366F1;
+  --c-accent-bg:   #EEF2FF;
+  --c-accent-bdr:  #C7D2FE;
+  --c-accent-txt:  #4F46E5;
+  --c-success:     #059669;
+  --c-success-bg:  #ECFDF5;
+  --c-danger:      #DC2626;
+  --c-danger-bg:   #FEF2F2;
+}
+
+/* ── Color tokens (dark) ──────────────────────────────────────────── */
+[data-theme="dark"] {
+  --c-bg:          #09090B;
+  --c-surface:     #18181B;
+  --c-surface-2:   #27272A;
+  --c-border:      #3F3F46;
+  --c-border-in:   #27272A;
+  --c-text:        #FAFAFA;
+  --c-text-2:      #E4E4E7;
+  --c-text-sec:    #A1A1AA;
+  --c-text-muted:  #71717A;
+  --c-text-faint:  #52525B;
+  --c-accent:      #818CF8;
+  --c-accent-bg:   #1E1B4B;
+  --c-accent-bdr:  #312E81;
+  --c-accent-txt:  #A5B4FC;
+  --c-success:     #34D399;
+  --c-success-bg:  #064E3B;
+  --c-danger:      #F87171;
+  --c-danger-bg:   #450A0A;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--c-text-muted); }
+
+.cursor {
+  display: inline-block;
+  width: 2px; height: 1em;
+  background-color: var(--c-accent);
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes slideUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.animate-fade-in  { animation: fadeIn  0.3s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+
+@keyframes pulse-dot {
+  0%,100%{transform:scale(1);opacity:1}
+  50%    {transform:scale(1.25);opacity:0.6}
+}
+
+@keyframes running-dot {
+  0%,80%,100%{transform:scale(0);opacity:0.3}
+  40%        {transform:scale(1);opacity:1}
+}
+
+.running-dot {
+  display:inline-block; width:5px; height:5px;
+  border-radius:50%; animation:running-dot 1.4s ease-in-out infinite;
+}
+.running-dot:nth-child(2){ animation-delay:0.16s }
+.running-dot:nth-child(3){ animation-delay:0.32s }
+
+@keyframes shimmer {
+  0%  { background-position: -400px 0 }
+  100%{ background-position:  400px 0 }
+}
