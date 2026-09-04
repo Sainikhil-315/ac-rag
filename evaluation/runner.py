@@ -58,8 +58,14 @@ def load_test_set(path: str) -> List[Dict[str, Any]]:
         raise FileNotFoundError(f"Test set not found: {path}")
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
+    # Accept both flat-list and wrapped {test_cases: [...]} formats.
+    # The annotator writes the wrapped format with a _meta header describing
+    # the overlap threshold and stats — preserve those keys untouched and
+    # pass through any other top-level list value as the test cases.
+    if isinstance(data, dict) and "test_cases" in data:
+        data = data["test_cases"]
     if not isinstance(data, list):
-        raise ValueError("Test set must be a JSON array.")
+        raise ValueError("Test set must be a JSON array (or {test_cases: [...]} wrapper).")
     # Normalise field names: support both legacy format ("query"/"reference_answer")
     # and the sample test set format ("question"/"answer").
     normalised = []
@@ -85,8 +91,12 @@ def evaluate_single(
     Run the full pipeline for one test case and compute all metrics.
     Returns a result dict with pipeline outputs + metrics.
     """
-    query = test_case["query"]
-    reference = test_case.get("reference_answer")
+    # Normalise field names — supports both raw test sets (question/answer)
+    # and the runner.py output format (query/reference_answer). Mirrors
+    # load_test_set() so evaluate_single can be called directly on a raw
+    # test case without going through load_test_set first.
+    query = test_case.get("query") or test_case.get("question")
+    reference = test_case.get("reference_answer") or test_case.get("answer")
 
     logger.info("[Runner] Evaluating: '%s'", query[:80])
     t0 = time.perf_counter()
@@ -101,6 +111,11 @@ def evaluate_single(
         retrieved_docs = state.get("retrieved_docs") or []
         critic_scores = state.get("critic_scores") or {}
 
+        # relevant_chunk_ids is optional in the test set; when present it lets
+        # the metrics layer compute Recall@k / MRR / Precision@k — the headline
+        # numbers for the adaptive-retrieval claim.
+        relevant_ids = test_case.get("relevant_chunk_ids") or test_case.get("relevant_chunks")
+
         # Compute evaluation metrics
         metrics = compute_all_metrics(
             query=query,
@@ -110,6 +125,7 @@ def evaluate_single(
             total_retrieved=len(retrieved_docs),
             reference_answer=reference,
             retrieved_docs=retrieved_docs,
+            relevant_chunk_ids=relevant_ids,
         )
 
         return {
@@ -123,6 +139,8 @@ def evaluate_single(
             "retry_count": state.get("retry_count", 0),
             "docs_retrieved": len(retrieved_docs),
             "docs_after_validation": len(state.get("scored_docs") or []),
+            "retrieved_chunk_ids": [d.get("chunk_id") for d in retrieved_docs if d.get("chunk_id")],
+            "relevant_chunk_ids": relevant_ids,
             "critic_scores": dict(critic_scores),
             "critic_passed": state.get("critic_passed"),
             "error": state.get("error"),

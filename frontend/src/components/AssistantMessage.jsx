@@ -4,8 +4,8 @@ import ScoreCards from './ScoreCards'
 import PipelineTrace from './PipelineTrace'
 
 const ROUTE_STYLES = {
-  rag:     { label: 'RAG Pipeline', className: 'bg-accent/15 text-accent border-accent/25' },
-  unknown: { label: 'Out of Scope', className: 'bg-surface-2/80 text-muted border-border' },
+  rag:     { label: 'RAG Pipeline', className: 'text-accent border-accent bg-accent-bg' },
+  unknown: { label: 'Out of Scope', className: 'text-text-secondary border-border bg-surface-2' },
 }
 
 const INTENT_ICONS = { factual: '🔍', analytical: '📊', comparative: '⚖️', summarization: '📝' }
@@ -29,7 +29,8 @@ export default function AssistantMessage({ message }) {
             </span>
             {intent && (
               <span className="text-[11px] text-secondary flex items-center gap-1">
-                <span>{INTENT_ICONS[intent] || '•'}</span> {intent}
+                <span>{INTENT_ICONS[intent] || '•'}</span>
+                {intent}
               </span>
             )}
             {retries > 0 && (
@@ -38,14 +39,19 @@ export default function AssistantMessage({ message }) {
           </div>
         )}
 
-        {/* Complexity bar */}
+        {/* Complexity */}
         {complexity != null && route === 'rag' && (
           <div className="flex items-center gap-3 mb-4">
             <span className="text-[11px] text-muted w-20">Complexity</span>
             <div className="flex-1 h-1 bg-surface-2 rounded-full overflow-hidden">
-              <div className="h-full bg-accent rounded-full transition-all duration-700" style={{ width: `${complexity * 100}%` }} />
+              <div
+                className="h-full bg-accent rounded-full transition-all duration-700"
+                style={{ width: `${complexity * 100}%` }}
+              />
             </div>
-            <span className="text-[11px] text-secondary font-mono w-8 text-right">{complexity.toFixed(2)}</span>
+            <span className="text-[11px] text-secondary font-mono w-8 text-right">
+              {complexity.toFixed(2)}
+            </span>
           </div>
         )}
 
@@ -73,7 +79,7 @@ export default function AssistantMessage({ message }) {
 
         {/* Error */}
         {error && (
-          <div className="mt-4 p-3 bg-danger/10 border border-danger/20 rounded-lg">
+          <div className="mt-4 p-3 bg-danger-bg border border-danger/30 rounded-lg">
             <p className="text-xs text-danger">{error}</p>
           </div>
         )}
@@ -83,15 +89,19 @@ export default function AssistantMessage({ message }) {
       {!isStreaming && (sources?.length > 0 || trace?.length > 0) && (
         <div className="flex gap-2 px-1">
           {sources?.length > 0 && (
-            <button onClick={() => setShowSources(s => !s)}
-              className="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors py-1">
+            <button
+              onClick={() => setShowSources(s => !s)}
+              className="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors py-1"
+            >
               {showSources ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
               Sources ({sources.length})
             </button>
           )}
           {trace?.length > 0 && (
-            <button onClick={() => setShowTrace(s => !s)}
-              className="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors py-1 ml-2">
+            <button
+              onClick={() => setShowTrace(s => !s)}
+              className="flex items-center gap-1.5 text-xs text-secondary hover:text-primary transition-colors py-1 ml-2"
+            >
               {showTrace ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
               Pipeline trace ({trace.length} stages)
             </button>

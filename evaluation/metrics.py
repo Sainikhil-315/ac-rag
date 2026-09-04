@@ -232,6 +232,135 @@ def context_utilisation(
     return 0.0
 
 
+# ── 6. Retrieval Quality: Recall@k and MRR ────────────────────────────────────
+#
+# These are the metrics that directly evaluate the Retrieval Planner's adaptive-k
+# design — none of the answer-side metrics (faithfulness, relevance) can tell you
+# whether retrieving 4 vs 12 passages is the right call, but Recall@k and MRR can.
+#
+# Ground truth format: for each query, a list of "relevant chunk_ids" (or any
+# string IDs) the system SHOULD have retrieved. Annotated manually on the test
+# set, or auto-derived from the test set's reference answer (e.g. any chunk whose
+# text contains ≥40% of the reference answer's tokens is considered relevant).
+#
+# For a research-grade claim about adaptive retrieval, you want:
+#   - Recall@4  (does the planner's minimum-k still find the answer for simple queries?)
+#   - Recall@12 (does the planner's maximum-k recover the answer for complex queries?)
+#   - MRR       (how high does the FIRST relevant chunk rank? — latency-sensitive)
+#   - Precision@k (fraction of retrieved chunks that are actually relevant)
+
+def recall_at_k(
+    retrieved_chunk_ids: List[str],
+    relevant_chunk_ids: List[str],
+    k: int,
+) -> float:
+    """
+    Recall@k = (relevant chunks in top-k) / (total relevant chunks).
+
+    Returns 1.0 if the query has no annotated relevant chunks (vacuously true —
+    the test set entry is treated as un-evaluable for retrieval, not scored 0).
+    Returns 0.0 if there are relevant chunks but none are in the top-k.
+
+    Args:
+        retrieved_chunk_ids: ordered list of chunk_ids the system actually returned
+                             (top of list = highest rank).
+        relevant_chunk_ids:  ground-truth list of chunk_ids that answer the query.
+        k:                   cut-off (we use the first k of retrieved_chunk_ids).
+    """
+    if not relevant_chunk_ids:
+        return 1.0
+    if not retrieved_chunk_ids:
+        return 0.0
+
+    relevant_set = set(relevant_chunk_ids)
+    top_k = retrieved_chunk_ids[:k]
+    hits = sum(1 for cid in top_k if cid in relevant_set)
+    return round(hits / len(relevant_set), 4)
+
+
+def mrr(
+    retrieved_chunk_ids: List[str],
+    relevant_chunk_ids: List[str],
+) -> float:
+    """
+    Mean Reciprocal Rank: 1 / (rank of first relevant chunk).
+    Returns 0.0 if no relevant chunk is retrieved.
+    Returns 1.0 (not 0.0) if there are no annotated relevant chunks — same
+    convention as recall_at_k; an un-evaluable query is not punished.
+    """
+    if not relevant_chunk_ids:
+        return 1.0
+    if not retrieved_chunk_ids:
+        return 0.0
+
+    relevant_set = set(relevant_chunk_ids)
+    for rank, cid in enumerate(retrieved_chunk_ids, start=1):
+        if cid in relevant_set:
+            return round(1.0 / rank, 4)
+    return 0.0
+
+
+def precision_at_k(
+    retrieved_chunk_ids: List[str],
+    relevant_chunk_ids: List[str],
+    k: int,
+) -> float:
+    """
+    Precision@k = (relevant chunks in top-k) / k.
+    Measures how much of what the retriever returned was actually useful —
+    a high-precision retriever is one that doesn't waste context-window budget
+    on irrelevant passages (relevant for context_utilisation downstream).
+    """
+    if k <= 0 or not retrieved_chunk_ids:
+        return 0.0
+    if not relevant_chunk_ids:
+        return 1.0  # no ground truth to falsify against
+
+    relevant_set = set(relevant_chunk_ids)
+    top_k = retrieved_chunk_ids[:k]
+    hits = sum(1 for cid in top_k if cid in relevant_set)
+    return round(hits / k, 4)
+
+
+def retrieval_metrics(
+    retrieved_docs: List[Dict[str, Any]],
+    relevant_chunk_ids: Optional[List[str]] = None,
+    k_values: Optional[List[int]] = None,
+) -> Dict[str, float]:
+    """
+    Compute Recall@k, MRR, and Precision@k for a single query's retrieval.
+
+    Args:
+        retrieved_docs:       list of dicts with a "chunk_id" key (the retriever
+                              node's output shape).
+        relevant_chunk_ids:   ground-truth list of relevant chunk_ids. If None
+                              or empty, the function returns an empty dict
+                              (caller decides whether to skip the query or
+                              report None — the eval runner reports None).
+        k_values:             cut-offs to compute Recall@k / Precision@k for.
+                              Defaults to [4, 6, 12] — the planner's min,
+                              default, and max k.
+
+    Returns:
+        Dict of metric_name → float, e.g. {"recall@4": 0.5, "recall@12": 1.0,
+        "mrr": 0.5, "precision@4": 0.5, "precision@6": 0.33, "precision@12": 0.25}.
+        Returns {} when relevant_chunk_ids is None/empty (no ground truth).
+    """
+    if not relevant_chunk_ids:
+        return {}
+
+    k_values = k_values or [4, 6, 12]
+    retrieved_ids = [
+        d.get("chunk_id", "") for d in (retrieved_docs or []) if d.get("chunk_id")
+    ]
+
+    out: Dict[str, float] = {"mrr": mrr(retrieved_ids, relevant_chunk_ids)}
+    for k in k_values:
+        out[f"recall@{k}"]    = recall_at_k(retrieved_ids, relevant_chunk_ids, k)
+        out[f"precision@{k}"] = precision_at_k(retrieved_ids, relevant_chunk_ids, k)
+    return out
+
+
 # ── Composite score ───────────────────────────────────────────────────────────
 
 def compute_all_metrics(
@@ -242,10 +371,16 @@ def compute_all_metrics(
     total_retrieved: int,
     reference_answer: Optional[str] = None,
     retrieved_docs: Optional[List[Dict]] = None,
+    relevant_chunk_ids: Optional[List[str]] = None,
 ) -> Dict[str, float]:
     """
     Compute all available metrics for a single query-answer pair.
     Returns a dict of metric_name → score (all in [0, 1]).
+
+    When `relevant_chunk_ids` is provided, retrieval-quality metrics
+    (Recall@k, MRR, Precision@k) are included — these directly evaluate the
+    Retrieval Planner's adaptive-k design and are the headline numbers for
+    the paper's central novelty claim.
     """
     results: Dict[str, float] = {}
 
@@ -262,7 +397,14 @@ def compute_all_metrics(
     if reference_answer:
         results["rouge_l"] = rouge_l_score(answer, reference_answer)
 
-    # Composite: mean of all available scores
-    results["composite"] = round(float(np.mean(list(results.values()))), 4)
+    # Retrieval-quality metrics — only if ground truth provided
+    if relevant_chunk_ids:
+        results.update(retrieval_metrics(retrieved_docs, relevant_chunk_ids))
+
+    # Composite: mean of all available scores (excludes retrieval metrics
+    # if no ground truth was provided, so the composite stays comparable
+    # across queries with and without relevance annotations)
+    if results:
+        results["composite"] = round(float(np.mean(list(results.values()))), 4)
 
     return results

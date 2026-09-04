@@ -1,0 +1,844 @@
+{
+  "_meta": {
+    "annotator": "evaluation/annotate_relevance.py",
+    "overlap_threshold": 0.3,
+    "annotation_stats": {
+      "overlap_threshold": 0.3,
+      "total_queries": 46,
+      "queries_with_at_least_one_relevant": 44,
+      "avg_relevant_per_query": 10.02,
+      "max_relevant_per_query": 23,
+      "min_relevant_per_query": 0
+    },
+    "note": "relevant_chunk_ids is a deterministic, transparent ground-truth derived from token overlap with the reference answer — not human judgment. Adaptive-retrieval claims rest on the *delta* between full and ablation configs at fixed ground truth, not on the absolute metric value."
+  },
+  "test_cases": [
+    {
+      "id": 1,
+      "question": "What are the two main failures of traditional RAG systems mentioned in the paper?",
+      "answer": "Fixed retrieval depth regardless of query complexity and lack of comparison between generated responses and retrieved evidence.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "cb14beb71573",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "615370239ddb",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "369ae77ffda8"
+      ]
+    },
+    {
+      "id": 2,
+      "question": "What is AC-RAG?",
+      "answer": "AC-RAG is a multi-agent system for document question answering that improves retrieval, validation, and answer generation.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "615370239ddb",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "11009494f38a",
+        "101f3f510b61",
+        "cfd253ba7472",
+        "2182be96e068",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 3,
+      "question": "What evaluation framework was used in the experiments?",
+      "answer": "RAGAS.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "b43527759d1d",
+        "615370239ddb",
+        "369ae77ffda8",
+        "cfd253ba7472"
+      ]
+    },
+    {
+      "id": 4,
+      "question": "Does AC-RAG require model fine-tuning?",
+      "answer": "No, it operates without fine-tuning.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "70e8fe6c8448"
+      ]
+    },
+    {
+      "id": 5,
+      "question": "What types of documents does AC-RAG support?",
+      "answer": "Text, tables, and figures.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "60e7a9213e2e",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "e1e6a9532d5e",
+        "369ae77ffda8",
+        "0c662a452f77",
+        "fcb143227c6e",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 6,
+      "question": "What method is used for document retrieval?",
+      "answer": "Maximum Marginal Relevance (MMR).",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "ac21e2e5e79f",
+        "fdde02190d4a"
+      ]
+    },
+    {
+      "id": 7,
+      "question": "What is the retrieval range (k)?",
+      "answer": "Between 4 and 12 passages.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "615370239ddb",
+        "5bf2cef05fde",
+        "62c9d6206519"
+      ]
+    },
+    {
+      "id": 8,
+      "question": "What similarity threshold is used in evidence validation?",
+      "answer": "0.65.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "ac21e2e5e79f",
+        "279fe3697fbf",
+        "fcb143227c6e"
+      ]
+    },
+    {
+      "id": 9,
+      "question": "What are the main stages in AC-RAG pipeline?",
+      "answer": "Query understanding, retrieval planning, document retrieval, evidence validation, context refinement, answer generation, and self-reflection.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "cb14beb71573",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "615370239ddb",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "e1e6a9532d5e",
+        "369ae77ffda8",
+        "11009494f38a",
+        "101f3f510b61",
+        "fcb143227c6e",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 10,
+      "question": "What is the purpose of the query understanding stage?",
+      "answer": "To rewrite the query, identify intent and complexity, and decompose complex queries into sub-queries.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "70e8fe6c8448",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "cb14beb71573",
+        "b43527759d1d",
+        "279fe3697fbf",
+        "5bf2cef05fde"
+      ]
+    },
+    {
+      "id": 11,
+      "question": "How does AC-RAG adjust retrieval depth?",
+      "answer": "It dynamically adjusts retrieval depth based on query complexity, retrieving more passages for complex queries and fewer for simple ones.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "cb14beb71573",
+        "279fe3697fbf",
+        "5bf2cef05fde",
+        "369ae77ffda8"
+      ]
+    },
+    {
+      "id": 12,
+      "question": "Why is evidence validation important in AC-RAG?",
+      "answer": "It filters out irrelevant or low-quality passages, ensuring only relevant evidence is used for answer generation.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "615370239ddb",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "369ae77ffda8"
+      ]
+    },
+    {
+      "id": 13,
+      "question": "What happens if insufficient valid passages remain after validation?",
+      "answer": "The system retries retrieval planning with adjusted parameters.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "cb14beb71573",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "101f3f510b61",
+        "fcb143227c6e"
+      ]
+    },
+    {
+      "id": 14,
+      "question": "How does context refinement improve performance?",
+      "answer": "It removes redundancy, filters weak passages, and creates a concise and coherent context for generation.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "369ae77ffda8"
+      ]
+    },
+    {
+      "id": 15,
+      "question": "What is the role of self-reflection in AC-RAG?",
+      "answer": "It evaluates answers across five dimensions and decides whether to accept, regenerate, or retry.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "513668f06382",
+        "fdde02190d4a",
+        "279fe3697fbf"
+      ]
+    },
+    {
+      "id": 16,
+      "question": "What are the five evaluation dimensions in self-reflection?",
+      "answer": "Faithfulness, completeness, table accuracy, figure accuracy, and conciseness.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "513668f06382",
+        "b43527759d1d",
+        "279fe3697fbf"
+      ]
+    },
+    {
+      "id": 17,
+      "question": "What is the acceptance threshold in self-reflection?",
+      "answer": "A score of at least 4 out of 5 in all dimensions.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "95acc3daee82",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "cb14beb71573",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "279fe3697fbf",
+        "615370239ddb",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "101f3f510b61"
+      ]
+    },
+    {
+      "id": 18,
+      "question": "What happens when content-related issues are detected in self-reflection?",
+      "answer": "The system returns to the query understanding stage for retry.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "95acc3daee82",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "cb14beb71573",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "615370239ddb",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "101f3f510b61"
+      ]
+    },
+    {
+      "id": 19,
+      "question": "What happens when formatting issues are detected?",
+      "answer": "The answer is regenerated using the same context.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "615370239ddb",
+        "62c9d6206519",
+        "369ae77ffda8"
+      ]
+    },
+    {
+      "id": 20,
+      "question": "What is the maximum number of retries allowed?",
+      "answer": "Three retries.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "513668f06382",
+        "e5fc0e19f9ac",
+        "60e7a9213e2e",
+        "b43527759d1d",
+        "279fe3697fbf",
+        "fcb143227c6e"
+      ]
+    },
+    {
+      "id": 21,
+      "question": "How are documents stored in the vector database?",
+      "answer": "They are split into chunks and stored in modality-specific vector stores for text, tables, and figures.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "ac21e2e5e79f",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "60e7a9213e2e",
+        "b43527759d1d"
+      ]
+    },
+    {
+      "id": 22,
+      "question": "What chunk size is used for document preprocessing?",
+      "answer": "600 characters.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "e5fc0e19f9ac",
+        "60e7a9213e2e",
+        "279fe3697fbf",
+        "fcb143227c6e"
+      ]
+    },
+    {
+      "id": 23,
+      "question": "What chunk overlap is used?",
+      "answer": "100 characters.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "e5fc0e19f9ac",
+        "60e7a9213e2e",
+        "279fe3697fbf",
+        "fcb143227c6e"
+      ]
+    },
+    {
+      "id": 24,
+      "question": "Which vector database is used?",
+      "answer": "ChromaDB.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "e5fc0e19f9ac",
+        "60e7a9213e2e",
+        "b43527759d1d"
+      ]
+    },
+    {
+      "id": 25,
+      "question": "Which embedding model is used?",
+      "answer": "text-embedding-3-large.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "60e7a9213e2e",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "e1e6a9532d5e",
+        "369ae77ffda8",
+        "101f3f510b61",
+        "0c662a452f77",
+        "cfd253ba7472",
+        "fcb143227c6e",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 26,
+      "question": "Which model is used for answer generation?",
+      "answer": "GPT-4o.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "b43527759d1d",
+        "279fe3697fbf",
+        "fcb143227c6e"
+      ]
+    },
+    {
+      "id": 27,
+      "question": "Which model is used for the critic?",
+      "answer": "o3-mini.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "b43527759d1d",
+        "279fe3697fbf",
+        "fcb143227c6e"
+      ]
+    },
+    {
+      "id": 28,
+      "question": "What types of queries were used in evaluation?",
+      "answer": "Factual, analytical, and table/figure-based queries.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "60e7a9213e2e",
+        "b43527759d1d",
+        "279fe3697fbf",
+        "62c9d6206519",
+        "101f3f510b61"
+      ]
+    },
+    {
+      "id": 29,
+      "question": "How many QA pairs were used in evaluation?",
+      "answer": "50 question-answer pairs.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "95acc3daee82",
+        "ac21e2e5e79f",
+        "8ad8a4530cea",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "615370239ddb",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "11009494f38a",
+        "101f3f510b61",
+        "0c662a452f77"
+      ]
+    },
+    {
+      "id": 30,
+      "question": "What is context recall?",
+      "answer": "The amount of needed information captured in the retrieved set.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "279fe3697fbf",
+        "615370239ddb",
+        "5bf2cef05fde",
+        "62c9d6206519"
+      ]
+    },
+    {
+      "id": 31,
+      "question": "How did AC-RAG perform compared to baseline RAG in faithfulness?",
+      "answer": "AC-RAG achieved 0.88 while baseline achieved 0.61.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "279fe3697fbf",
+        "615370239ddb",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "f67590292091"
+      ]
+    },
+    {
+      "id": 32,
+      "question": "How did hallucination reduction improve?",
+      "answer": "From 0.58 in baseline to 0.85 in AC-RAG.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "279fe3697fbf",
+        "615370239ddb",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "101f3f510b61",
+        "cfd253ba7472",
+        "2182be96e068",
+        "f67590292091",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 33,
+      "question": "What was the improvement in context relevance?",
+      "answer": "From 0.64 to 0.86.",
+      "type": "analytical",
+      "relevant_chunk_ids": []
+    },
+    {
+      "id": 34,
+      "question": "What was the response accuracy of AC-RAG?",
+      "answer": "0.87.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "615370239ddb",
+        "62c9d6206519",
+        "f67590292091",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 35,
+      "question": "Which component contributed most to performance improvement?",
+      "answer": "Self-reflection.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "70e8fe6c8448",
+        "c5a03d2a11cf",
+        "80171d4f06bf",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "279fe3697fbf",
+        "615370239ddb",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "11009494f38a",
+        "cfd253ba7472",
+        "2182be96e068",
+        "fcb143227c6e",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 36,
+      "question": "What happens when self-reflection is removed?",
+      "answer": "Faithfulness drops significantly from 0.88 to 0.73.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "80171d4f06bf",
+        "95acc3daee82",
+        "513668f06382",
+        "b43527759d1d",
+        "a1cb35ba8ba3",
+        "615370239ddb",
+        "62c9d6206519",
+        "e1e6a9532d5e",
+        "369ae77ffda8",
+        "101f3f510b61",
+        "0c662a452f77",
+        "f67590292091"
+      ]
+    },
+    {
+      "id": 37,
+      "question": "What is the limitation of the evaluation dataset?",
+      "answer": "It contains only 50 QA pairs, limiting generalizability.",
+      "type": "factual",
+      "relevant_chunk_ids": [
+        "70e8fe6c8448"
+      ]
+    },
+    {
+      "id": 38,
+      "question": "What is a limitation of RAGAS metrics?",
+      "answer": "They rely on automated scoring and may not fully reflect true answer quality.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c5a03d2a11cf",
+        "fdde02190d4a",
+        "b43527759d1d",
+        "615370239ddb",
+        "369ae77ffda8",
+        "101f3f510b61"
+      ]
+    },
+    {
+      "id": 39,
+      "question": "What is the trade-off of multi-agent design?",
+      "answer": "Improved accuracy but increased latency due to multiple steps.",
+      "type": "analytical",
+      "relevant_chunk_ids": []
+    },
+    {
+      "id": 40,
+      "question": "What is the main conclusion of the paper?",
+      "answer": "Adaptive retrieval combined with validation and self-reflection improves reliability in document question answering without fine-tuning.",
+      "type": "analytical",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "70e8fe6c8448",
+        "80171d4f06bf",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "279fe3697fbf",
+        "615370239ddb",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "11009494f38a",
+        "101f3f510b61",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 41,
+      "question": "How does AC-RAG's architecture compare to the original RAG (2020) system across the eight evaluated dimensions?",
+      "answer": "AC-RAG supports all eight dimensions (dense retrieval, adaptive retrieval, multi-agent architecture, evidence validation, context refinement, self-reflection, feedback, and no fine-tuning), while RAG (2020) only supports dense retrieval and requires no fine-tuning — it lacks adaptive retrieval, multi-agent architecture, evidence validation, context refinement, self-reflection, and feedback.",
+      "type": "comparative",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "70e8fe6c8448",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "279fe3697fbf",
+        "62c9d6206519",
+        "e1e6a9532d5e",
+        "369ae77ffda8",
+        "101f3f510b61",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 42,
+      "question": "Which prior system in the comparison table also implements a self-reflection mechanism, and how does it differ from AC-RAG?",
+      "answer": "Reflexion (2023) is the only other system in the comparison marked with self-reflection support, alongside partial feedback support. Unlike AC-RAG, it does not have dense retrieval, adaptive retrieval, multi-agent architecture, evidence validation, or context refinement.",
+      "type": "comparative",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "70e8fe6c8448",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "fdde02190d4a",
+        "e5fc0e19f9ac",
+        "279fe3697fbf",
+        "615370239ddb",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "101f3f510b61",
+        "a67b3038617c"
+      ]
+    },
+    {
+      "id": 43,
+      "question": "Do DPR (2020) and FiD (2021) support any capabilities beyond dense retrieval, according to the comparison table?",
+      "answer": "No — according to Table 1, both DPR (2020) and FiD (2021) support only dense retrieval among the eight compared dimensions, and neither is marked as requiring no fine-tuning.",
+      "type": "comparative",
+      "relevant_chunk_ids": [
+        "70e8fe6c8448",
+        "513668f06382",
+        "e5fc0e19f9ac",
+        "62c9d6206519",
+        "2182be96e068"
+      ]
+    },
+    {
+      "id": 44,
+      "question": "Summarize the limitations of AC-RAG discussed in the paper.",
+      "answer": "The paper identifies three main limitations: the evaluation was performed on a relatively small sample of 50 question-answer pairs which may limit generalizability to larger or more diverse document sets, the self-reflection mechanism relies on predetermined thresholds, and the multi-stage pipeline introduces more latency than simpler single-shot methods.",
+      "type": "summarization",
+      "relevant_chunk_ids": [
+        "80171d4f06bf",
+        "b43527759d1d",
+        "369ae77ffda8",
+        "11009494f38a",
+        "101f3f510b61"
+      ]
+    },
+    {
+      "id": 45,
+      "question": "Summarize how context relevance changed with AC-RAG's adaptive retrieval strategy.",
+      "answer": "Context relevance improved from approximately 0.64 to 0.86, which the paper attributes to the adaptive retrieval strategy that adjusts the number of passages retrieved based on query complexity.",
+      "type": "summarization",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "c49fb544e05a",
+        "70e8fe6c8448",
+        "80171d4f06bf",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "fdde02190d4a",
+        "a1cb35ba8ba3",
+        "279fe3697fbf",
+        "5bf2cef05fde",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "101f3f510b61"
+      ]
+    },
+    {
+      "id": 46,
+      "question": "How does ReAct (2023) compare to AC-RAG in terms of adaptive retrieval support?",
+      "answer": "ReAct (2023) is marked with only partial support for both dense and adaptive retrieval in the comparison table, whereas AC-RAG fully supports adaptive retrieval via its Retrieval Planner.",
+      "type": "comparative",
+      "relevant_chunk_ids": [
+        "95f1f3395f8b",
+        "ac21e2e5e79f",
+        "513668f06382",
+        "e5fc0e19f9ac",
+        "b43527759d1d",
+        "279fe3697fbf",
+        "62c9d6206519",
+        "369ae77ffda8",
+        "101f3f510b61",
+        "cfd253ba7472"
+      ]
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { Send, Copy, Check, FileText, RefreshCw, Upload as UploadIcon } from 'lucide-react'
 import { AGENTS } from '../../constants/agents'
 
 let _id = 0
@@ -21,58 +22,59 @@ function lsSet(key, value) {
 // ── User message bubble ───────────────────────────────────────────────────────
 function UserBubble({ content }) {
   return (
-    <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:'6px', animation:'slideUp 0.2s ease-out' }}>
-      <div style={{
-        maxWidth:'72%',
-        background:'linear-gradient(135deg,#6366F1,#8B5CF6)',
-        color:'#FFFFFF', borderRadius:'18px 18px 4px 18px',
-        padding:'10px 16px', fontSize:'13px', lineHeight:1.65,
-        boxShadow:'0 2px 8px rgba(99,102,241,0.25)', wordBreak:'break-word',
-      }}>
+    <div className="flex justify-end animate-slide-up">
+      <div className="max-w-[72%] bg-accent-bg border border-accent-bdr rounded-2xl rounded-tr-sm px-4 py-3 text-sm text-accent-txt leading-relaxed">
         {content}
       </div>
     </div>
   )
 }
 
-// ── Collapsible section ───────────────────────────────────────────────────────
-function Expandable({ icon, label, badge, badgeColor='#6366F1', defaultOpen=false, children }) {
+// ── Expandable section ───────────────────────────────────────────────────────
+function Expandable({ icon, label, badge, badgeColor = '#6366F1', defaultOpen = false, children }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div style={{ borderTop:'1px solid var(--c-border-in)', marginTop:'10px', paddingTop:'8px' }}>
-      <button onClick={() => setOpen(o=>!o)} style={{
-        display:'flex', alignItems:'center', gap:'6px', width:'100%',
-        background:'none', border:'none', cursor:'pointer', padding:'2px 0',
-        fontFamily:'Inter, sans-serif', textAlign:'left',
-      }}>
-        <span style={{ fontSize:'13px' }}>{icon}</span>
-        <span style={{ fontSize:'11px', fontWeight:600, color:'var(--c-text-sec)' }}>{label}</span>
+    <div className="border-t border-border-in mt-3 pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 w-full text-left bg-none border-none cursor-pointer py-1.5"
+      >
+        <span className="text-sm">{icon}</span>
+        <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">
+          {label}
+        </span>
         {badge != null && (
-          <span style={{
-            fontSize:'10px', fontWeight:700, color:badgeColor,
-            background:badgeColor+'18', borderRadius:'999px', padding:'1px 7px', fontFamily:'monospace',
-          }}>{badge}</span>
+          <span
+            className="text-[9px] font-bold px-1.5 py-0.25 rounded-full text-white"
+            style={{ background: badgeColor }}
+          >
+            {badge}
+          </span>
         )}
-        <span style={{ marginLeft:'auto', fontSize:'10px', color:'var(--c-text-faint)' }}>
+        <span className="ml-auto text-xs text-text-faint">
           {open ? '▲' : '▼'}
         </span>
       </button>
-      {open && <div style={{ marginTop:'8px' }}>{children}</div>}
+      {open && <div className="mt-2">{children}</div>}
     </div>
   )
 }
 
-// ── Score bar ─────────────────────────────────────────────────────────────────
+// ── Score bar row ─────────────────────────────────────────────────────────────
 function ScoreBar({ label, value }) {
-  const pct   = value != null ? Math.min((value/5)*100, 100) : 0
+  const pct   = value != null ? Math.min((value / 5) * 100, 100) : 0
   const color = scoreColor(value)
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px' }}>
-      <span style={{ fontSize:'11px', color:'var(--c-text-sec)', width:'100px', flexShrink:0 }}>{label}</span>
-      <div style={{ flex:1, height:'5px', background:'var(--c-border-in)', borderRadius:'999px', overflow:'hidden' }}>
-        <div style={{ height:'100%', width:`${pct}%`, background:color, borderRadius:'999px', transition:'width 0.5s ease' }} />
+    <div className="flex items-center gap-2 mb-1.5">
+      <span className="text-xs text-secondary w-24 flex-shrink-0">{label}</span>
+      <div className="flex-1 h-1 bg-bg rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: color }}
+        />
       </div>
-      <span style={{ fontSize:'11px', fontWeight:700, color, fontFamily:'monospace', width:'28px', textAlign:'right', flexShrink:0 }}>
+      <span className="text-xs font-bold font-mono w-7 text-right flex-shrink-0" style={{ color }}>
         {value != null ? parseFloat(value).toFixed(1) : '—'}
       </span>
     </div>
@@ -83,26 +85,29 @@ function ScoreBar({ label, value }) {
 function AgentTrace({ trace }) {
   if (!trace?.length) return null
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:'3px' }}>
+    <div className="flex flex-col gap-1">
       {trace.map(({ agentId, summary, duration_ms }) => {
         const agent = AGENTS.find(a => a.id === agentId)
         if (!agent) return null
         return (
-          <div key={agentId} style={{
-            display:'flex', alignItems:'center', gap:'8px',
-            background:'var(--c-surface-2)', borderRadius:'6px',
-            border:'1px solid var(--c-border)', padding:'5px 8px',
-          }}>
-            <span style={{ fontSize:'11px' }}>{agent.icon}</span>
-            <span style={{ fontSize:'10px', fontFamily:'monospace', fontWeight:700, color:agent.color, flexShrink:0 }}>{agent.number}</span>
-            <span style={{ fontSize:'11px', color:'var(--c-text-2)', fontWeight:600, flexShrink:0 }}>{agent.title}</span>
+          <div
+            key={agentId}
+            className="flex items-center gap-2 bg-surface-2 rounded-md border border-border px-2 py-1.5"
+          >
+            <span className="text-xs">{agent.icon}</span>
+            <span className="text-[10px] font-mono font-bold" style={{ color: agent.color }}>
+              {agent.number}
+            </span>
+            <span className="text-xs font-semibold text-text-2 truncate">
+              {agent.title}
+            </span>
             {summary && (
-              <span style={{ fontSize:'10px', color:'var(--c-text-muted)', flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+              <span className="text-[10px] text-muted truncate">
                 · {summary}
               </span>
             )}
             {duration_ms != null && (
-              <span style={{ fontSize:'10px', color:'var(--c-text-muted)', fontFamily:'monospace', flexShrink:0 }}>
+              <span className="text-[10px] text-muted font-mono ml-auto">
                 {duration_ms}ms
               </span>
             )}
@@ -113,19 +118,18 @@ function AgentTrace({ trace }) {
   )
 }
 
-// ── Confidence badge ──────────────────────────────────────────────────────────
+// ── Confidence badge ───────────────────────────────────────────────────────────
 function ConfidenceBadge({ overall }) {
   if (overall == null) return null
   const color = scoreColor(overall)
   const label = overall >= 4 ? 'High' : overall >= 3 ? 'Medium' : 'Low'
   return (
-    <span title={`Self-reflection score: ${overall}/5`} style={{
-      display:'inline-flex', alignItems:'center', gap:'4px',
-      background:color+'18', border:`1px solid ${color}44`,
-      borderRadius:'999px', padding:'2px 8px',
-      fontSize:'10px', fontWeight:700, color, cursor:'default',
-    }}>
-      <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:color, display:'inline-block' }}/>
+    <span
+      title={`Self-reflection score: ${overall}/5`}
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+      style={{ background: color + '1A', color: color }}
+    >
+      <span className="block w-1.5 h-1.5 rounded-full" style={{ background: color }} />
       {label} confidence · {parseFloat(overall).toFixed(1)}
     </span>
   )
@@ -142,18 +146,18 @@ function AssistantCard({ message }) {
   const [copied, setCopied] = useState(false)
 
   const ROUTE_META = {
-    rag:     { bg:'#EEF2FF', color:'#4F46E5', label:'⚡ RAG' },
-    unknown: { bg:'#F4F4F5', color:'#71717A', label:'🚫 Out of Scope' },
+    rag:     { bg: 'bg-accent-bg', color: 'text-accent-txt', label: '⚡ RAG' },
+    unknown: { bg: 'bg-surface-2', color: 'text-secondary', label: '🚫 Out of Scope' },
   }
   const rm = ROUTE_META[route] || ROUTE_META.rag
 
   const SCORE_LABELS = {
-    faithfulness:'Faithfulness', completeness:'Completeness',
-    table_accuracy:'Table Acc.', figure_accuracy:'Figure Acc.',
-    conciseness:'Conciseness', overall:'Overall',
+    faithfulness: 'Faithfulness', completeness: 'Completeness',
+    table_accuracy: 'Table Acc.', figure_accuracy: 'Figure Acc.',
+    conciseness: 'Conciseness', overall: 'Overall',
   }
 
-  const totalMs = agentTrace?.reduce((s,t) => s+(t.duration_ms||0), 0)
+  const totalMs = agentTrace?.reduce((s, t) => s + (t.duration_ms || 0), 0)
 
   const handleCopy = () => {
     if (!answer) return
@@ -163,113 +167,88 @@ function AssistantCard({ message }) {
   }
 
   return (
-    <div style={{ display:'flex', gap:'10px', marginBottom:'20px', animation:'slideUp 0.25s ease-out' }}>
+    <div className="flex gap-2.5 mb-5 animate-slide-up">
       {/* Avatar */}
-      <div style={{
-        width:'32px', height:'32px', borderRadius:'10px',
-        background:'var(--c-accent-bg)', border:'1px solid var(--c-accent-bdr)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        fontSize:'15px', flexShrink:0, marginTop:'2px',
-      }}>🧠</div>
+      <div className="w-8 h-8 rounded-lg bg-accent-bg border border-accent-bdr flex-shrink-0 flex items-center justify-center text-sm">
+        🧠
+      </div>
 
       {/* Card body */}
-      <div style={{
-        flex:1, background:'var(--c-surface)',
-        border:'1px solid var(--c-border)',
-        borderRadius:'4px 16px 16px 16px',
-        padding:'14px 16px',
-        boxShadow:'0 1px 4px rgba(0,0,0,0.06)',
-        minWidth:0,
-      }}>
-
+      <div className="flex-1 bg-surface border border-border rounded-xl rounded-tl-sm px-4 py-3.5 shadow-sm min-w-0">
         {/* Meta row */}
-        <div style={{ display:'flex', flexWrap:'wrap', gap:'5px', marginBottom:'10px', alignItems:'center' }}>
+        <div className="flex flex-wrap items-center gap-1.5 mb-3">
           {route && (
-            <span style={{
-              fontSize:'10px', fontWeight:700, color:rm.color,
-              background:rm.bg, borderRadius:'5px', padding:'2px 8px',
-            }}>{rm.label}</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${rm.bg} ${rm.color}`}>
+              {rm.label}
+            </span>
           )}
-          {/* Confidence badge — prominent, shown right after route */}
           <ConfidenceBadge overall={scores?.overall} />
 
           {intent && route === 'rag' && (
-            <span style={{
-              fontSize:'10px', fontWeight:600, color:'#6366F1',
-              background:'#F5F3FF', borderRadius:'5px', padding:'2px 8px', fontFamily:'monospace',
-            }}>{intent}</span>
+            <span className="text-[10px] font-semibold text-accent bg-accent-bg border border-accent-bdr rounded-md px-2 py-0.5 font-mono">
+              {intent}
+            </span>
           )}
           {complexity != null && route === 'rag' && (
-            <span style={{
-              fontSize:'10px', fontWeight:600, color:'var(--c-text-sec)',
-              background:'var(--c-surface-2)', borderRadius:'5px', padding:'2px 8px', fontFamily:'monospace',
-            }}>complexity: {complexity}</span>
+            <span className="text-[10px] font-semibold text-secondary bg-surface-2 border border-border rounded-md px-2 py-0.5 font-mono">
+              complexity: {complexity}
+            </span>
           )}
           {retries > 0 && (
-            <span style={{
-              fontSize:'10px', fontWeight:700, color:'#D97706',
-              background:'#FFF7ED', borderRadius:'5px', padding:'2px 8px',
-            }}>↺ {retries} {retries===1?'retry':'retries'}</span>
+            <span className="text-[10px] font-bold text-warning bg-warning-bg border border-warning/30 rounded-md px-2 py-0.5">
+              ↺ {retries} {retries === 1 ? 'retry' : 'retries'}
+            </span>
           )}
           {totalMs > 0 && (
-            <span style={{
-              fontSize:'10px', fontWeight:600, color:'var(--c-text-muted)',
-              background:'var(--c-surface-2)', borderRadius:'5px', padding:'2px 8px', fontFamily:'monospace',
-            }}>
-              {totalMs >= 1000 ? `${(totalMs/1000).toFixed(1)}s` : `${totalMs}ms`}
+            <span className="text-[10px] font-semibold text-muted bg-surface-2 border border-border rounded-md px-2 py-0.5 font-mono">
+              {totalMs >= 1000 ? `${(totalMs / 1000).toFixed(1)}s` : `${totalMs}ms`}
             </span>
           )}
 
-          {/* Copy button — far right */}
+          {/* Copy button */}
           {!isStreaming && answer && (
-            <button onClick={handleCopy} title="Copy answer" style={{
-              marginLeft:'auto', display:'flex', alignItems:'center', gap:'4px',
-              background:'none', border:'1px solid var(--c-border)',
-              borderRadius:'5px', padding:'2px 8px',
-              fontSize:'10px', color: copied ? '#059669' : 'var(--c-text-muted)',
-              cursor:'pointer', transition:'all 0.15s', fontFamily:'Inter, sans-serif',
-            }}>
-              {copied ? '✓ Copied' : '⎘ Copy'}
+            <button
+              onClick={handleCopy}
+              title="Copy answer"
+              className="ml-auto flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md border border-border hover:bg-surface-2 transition-colors"
+              style={{ color: copied ? 'var(--c-success)' : 'var(--c-text-muted)' }}
+            >
+              {copied ? <Check size={10} /> : <Copy size={10} />}
+              {copied ? 'Copied' : 'Copy'}
             </button>
           )}
         </div>
 
         {/* Rewritten query */}
         {rewritten && rewritten !== message.query && route === 'rag' && (
-          <div style={{
-            background:'#F5F3FF', border:'1px solid #DDD6FE',
-            borderRadius:'6px', padding:'6px 10px', marginBottom:'12px',
-          }}>
-            <span style={{ fontSize:'10px', fontWeight:700, color:'#8B5CF6', textTransform:'uppercase', letterSpacing:'0.05em' }}>
-              Rewritten ·{' '}
+          <div className="bg-accent-bg border border-accent-bdr rounded-md p-2 mb-3">
+            <span className="text-[9px] font-bold text-accent-txt uppercase tracking-wider">
+              Rewritten ·
             </span>
-            <span style={{ fontSize:'12px', color:'#6D28D9', fontFamily:'monospace' }}>{rewritten}</span>
+            <span className="text-xs text-accent Txt font-mono">
+              {' '}
+              {rewritten}
+            </span>
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div style={{
-            background:'var(--c-danger-bg)', border:'1px solid var(--c-danger)',
-            borderRadius:'6px', padding:'8px 12px', marginBottom:'12px',
-          }}>
-            <p style={{ fontSize:'12px', color:'var(--c-danger)', margin:0 }}>{error}</p>
+          <div className="bg-danger-bg border border-danger/30 rounded-md p-2.5 mb-3">
+            <p className="text-xs text-danger">{error}</p>
           </div>
         )}
 
         {/* Answer text */}
         {isStreaming && !answer ? (
-          <div style={{ display:'flex', gap:'4px', alignItems:'center', padding:'4px 0' }}>
-            {[0,1,2].map(i=>(
-              <span key={i} className="running-dot" style={{ background:'#6366F1' }} />
+          <div className="flex items-center gap-1 py-1">
+            {[0, 1, 2].map(i => (
+              <span key={i} className="block w-1.5 h-1.5 rounded-full bg-accent animate-[pulse-dot_1.5s_ease-in-out_infinite]" />
             ))}
-            <span style={{ fontSize:'12px', color:'var(--c-text-muted)', marginLeft:'6px' }}>Generating…</span>
+            <span className="text-xs text-muted ml-2">Generating…</span>
           </div>
         ) : (
-          <p style={{
-            fontSize:'14px', color:'var(--c-text)', lineHeight:1.75,
-            margin:0, whiteSpace:'pre-wrap', wordBreak:'break-word',
-          }}>
+          <p className="text-sm text-primary leading-relaxed whitespace-pre-wrap break-words">
             {answer}
             {isStreaming && <span className="cursor" />}
           </p>
@@ -277,8 +256,10 @@ function AssistantCard({ message }) {
 
         {/* Scores */}
         {scores && route === 'rag' && (
-          <Expandable icon="🪞" label="Self-Reflection Scores"
-            badge={`${parseFloat(scores.overall??0).toFixed(1)} / 5.0`}
+          <Expandable
+            icon="🪞"
+            label="Self-Reflection Scores"
+            badge={`${parseFloat(scores.overall ?? 0).toFixed(1)} / 5.0`}
             badgeColor={scoreColor(scores.overall)}
           >
             {Object.entries(SCORE_LABELS).map(([key, label]) => {
@@ -287,7 +268,7 @@ function AssistantCard({ message }) {
               return <ScoreBar key={key} label={label} value={parseFloat(val)} />
             })}
             {scores.feedback && (
-              <p style={{ fontSize:'11px', color:'var(--c-text-sec)', margin:'8px 0 0', fontStyle:'italic', lineHeight:1.5 }}>
+              <p className="text-[10px] text-secondary italic mt-2 leading-relaxed">
                 "{scores.feedback}"
               </p>
             )}
@@ -296,25 +277,27 @@ function AssistantCard({ message }) {
 
         {/* Sources */}
         {sources?.length > 0 && (
-          <Expandable icon="📎" label="Sources" badge={sources.length} badgeColor="#6366F1">
-            <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-              {sources.slice(0,8).map((src, i) => {
-                const sentence = typeof src==='string' ? src : src.sentence||''
-                const srcList  = typeof src==='object' ? src.sources||[] : []
+          <Expandable icon="📎" label="Sources" badge={sources.length}>
+            <div className="flex flex-col gap-1.5">
+              {sources.slice(0, 8).map((src, i) => {
+                const sentence = typeof src === 'string' ? src : src.sentence || ''
+                const srcList  = typeof src === 'object' ? src.sources || [] : []
                 return (
-                  <div key={i} style={{
-                    background:'var(--c-surface-2)', border:'1px solid var(--c-border)',
-                    borderRadius:'6px', padding:'8px 10px',
-                  }}>
-                    {sentence && <p style={{ fontSize:'12px', color:'var(--c-text-2)', margin:'0 0 5px', lineHeight:1.5 }}>{sentence}</p>}
+                  <div
+                    key={i}
+                    className="bg-surface-2 border border-border rounded-md p-2"
+                  >
+                    {sentence && (
+                      <p className="text-xs text-text-2 mb-1 leading-relaxed">{sentence}</p>
+                    )}
                     {srcList.length > 0 && (
-                      <div style={{ display:'flex', gap:'4px', flexWrap:'wrap' }}>
-                        {srcList.map((s,j)=>(
-                          <span key={j} style={{
-                            fontSize:'10px', color:'#6366F1', fontFamily:'monospace',
-                            background:'#EEF2FF', borderRadius:'4px', padding:'1px 6px',
-                          }}>
-                            {typeof s==='string' ? s : `chunk_${s}`}
+                      <div className="flex gap-1 flex-wrap">
+                        {srcList.map((s, j) => (
+                          <span
+                            key={j}
+                            className="text-[9px] text-accent font-mono bg-accent-bg border border-accent-bdr rounded px-1.5 py-0.25"
+                          >
+                            {typeof s === 'string' ? s : `chunk_${s}`}
                           </span>
                         ))}
                       </div>
@@ -328,7 +311,12 @@ function AssistantCard({ message }) {
 
         {/* Pipeline trace */}
         {agentTrace?.length > 0 && (
-          <Expandable icon="🔍" label="Pipeline Trace" badge={`${agentTrace.length} agents`} badgeColor="#8B5CF6">
+          <Expandable
+            icon="🔍"
+            label="Pipeline Trace"
+            badge={`${agentTrace.length} agents`}
+            badgeColor="#8B5CF6"
+          >
             <AgentTrace trace={agentTrace} />
           </Expandable>
         )}
@@ -339,7 +327,7 @@ function AssistantCard({ message }) {
 
 // ── Live pipeline strip ────────────────────────────────────────────────────────
 function LivePipelineStrip({ agentStates, isRunning, lastRoute }) {
-  const hasAny = Object.keys(agentStates||{}).length > 0
+  const hasAny = Object.keys(agentStates || {}).length > 0
   if (!hasAny && !isRunning) return null
 
   const STATE_COLOR = {
@@ -351,13 +339,9 @@ function LivePipelineStrip({ agentStates, isRunning, lastRoute }) {
 
   if (lastRoute === 'unknown') {
     return (
-      <div style={{
-        padding:'8px 20px', background:'var(--c-surface)',
-        borderBottom:'1px solid var(--c-border)',
-        display:'flex', alignItems:'center', gap:'8px',
-      }}>
-        <span style={{ fontSize:'12px' }}>🚫</span>
-        <span style={{ fontSize:'11px', fontWeight:600, color:'#71717A' }}>
+      <div className="px-5 py-2 bg-surface border-b border-border flex items-center gap-2">
+        <span className="text-sm">🚫</span>
+        <span className="text-xs font-semibold text-secondary">
           Query routed as Out of Scope — no pipeline agents ran
         </span>
       </div>
@@ -365,37 +349,36 @@ function LivePipelineStrip({ agentStates, isRunning, lastRoute }) {
   }
 
   return (
-    <div style={{
-      padding:'8px 20px', background:'var(--c-surface)',
-      borderBottom:'1px solid var(--c-border)',
-      display:'flex', alignItems:'center', gap:'6px', flexShrink:0,
-    }}>
-      <span style={{ fontSize:'10px', fontWeight:600, color:'var(--c-text-muted)', marginRight:'4px' }}>
+    <div className="px-5 py-1.5 bg-surface border-b border-border flex items-center gap-1 flex-shrink-0">
+      <span className="text-[10px] font-semibold text-muted mr-1">
         PIPELINE
       </span>
       {AGENTS.map((agent, idx) => {
         const state = agentStates?.[agent.id] || 'idle'
         const color = STATE_COLOR[state]
         return (
-          <div key={agent.id} style={{ display:'flex', alignItems:'center', gap:'4px' }}>
-            <div title={agent.title} style={{
-              width:'22px', height:'22px', borderRadius:'5px',
-              background: state==='idle' ? 'var(--c-bg)' : color+'18',
-              border:`1px solid ${color}`,
-              display:'flex', alignItems:'center', justifyContent:'center',
-              fontSize:'9px', fontWeight:700, color,
-              fontFamily:'monospace', flexShrink:0,
-              animation: state==='active' ? 'pulse-dot 1.5s ease-in-out infinite' : 'none',
-              transition:'all 0.2s',
-            }}>
-              {state==='done' ? '✓' : state==='error' ? '✗' : agent.number}
+          <div key={agent.id} className="flex items-center">
+            <div
+              title={agent.title}
+              className={`
+                w-5 h-5 rounded-md flex items-center justify-center
+                text-[8px] font-bold font-mono border flex-shrink-0
+                ${state === 'idle' ? 'bg-bg border-border text-muted' : 'border'}
+              `}
+              style={{
+                backgroundColor: state === 'idle' ? 'var(--c-bg)' : color + '33',
+                borderColor: color,
+                color: color,
+                animation: state === 'active' ? 'pulse-dot 1.5s ease-in-out infinite' : 'none',
+              }}
+            >
+              {state === 'done' ? '✓' : state === 'error' ? '✗' : agent.number}
             </div>
-            {idx < AGENTS.length-1 && (
-              <div style={{
-                width:'8px', height:'1px',
-                background: state==='done' ? '#059669' : 'var(--c-border)',
-                transition:'background 0.3s',
-              }}/>
+            {idx < AGENTS.length - 1 && (
+              <div
+                className="w-1.5 h-px transition-colors"
+                style={{ background: state === 'done' ? '#A7F3D0' : 'var(--c-border)' }}
+              />
             )}
           </div>
         )
@@ -406,40 +389,42 @@ function LivePipelineStrip({ agentStates, isRunning, lastRoute }) {
 
 // ── Pipeline step progress (left panel) ───────────────────────────────────────
 function PipelineProgress({ agentStates }) {
-  const STATE_COLOR = {
-    idle:   { bg:'var(--c-bg)',       text:'var(--c-text-muted)', border:'var(--c-border)' },
-    active: { bg:'#EEF2FF',           text:'#6366F1',             border:'#6366F1' },
-    done:   { bg:'var(--c-success-bg)', text:'var(--c-success)',  border:'#A7F3D0' },
-    error:  { bg:'var(--c-danger-bg)', text:'var(--c-danger)',    border:'#FECACA' },
+  const STATE_CONFIG = {
+    idle:   { bg: 'bg-bg',       text: 'text-muted',       border: 'border-border' },
+    active: { bg: 'bg-accent-bg', text: 'text-accent',     border: 'border-accent-bdr' },
+    done:   { bg: 'bg-success-bg', text: 'text-success',    border: 'border-success/30' },
+    error:  { bg: 'bg-danger-bg',  text: 'text-danger',     border: 'border-danger/30' },
   }
   return (
     <div>
-      <p style={{
-        fontSize:'10px', fontWeight:600, color:'var(--c-text-muted)',
-        textTransform:'uppercase', letterSpacing:'0.07em', margin:'0 0 8px',
-      }}>Pipeline Steps</p>
-      <div style={{ display:'flex', alignItems:'center', gap:'4px', flexWrap:'wrap' }}>
+      <p className="text-[9px] font-bold text-muted uppercase tracking-wider mb-2">
+        Pipeline Steps
+      </p>
+      <div className="flex items-center gap-1 flex-wrap">
         {AGENTS.map((agent, idx) => {
           const state = agentStates?.[agent.id] || 'idle'
-          const s = STATE_COLOR[state]
+          const cfg = STATE_CONFIG[state] || STATE_CONFIG.idle
           return (
-            <div key={agent.id} style={{ display:'flex', alignItems:'center', gap:'4px' }}>
-              <div title={agent.title} style={{
-                width:'28px', height:'28px', borderRadius:'6px',
-                background:s.bg, border:`1px solid ${s.border}`,
-                display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:'10px', fontWeight:700, color:s.text, fontFamily:'monospace', flexShrink:0,
-                animation:state==='active'?'pulse-dot 1.5s ease-in-out infinite':'none',
-                transition:'all 0.2s',
-              }}>
-                {state==='done' ? '✓' : state==='error' ? '✗' : agent.number}
+            <div key={agent.id} className="flex items-center gap-1">
+              <div
+                title={agent.title}
+                className={`
+                  w-6 h-6 rounded-md flex items-center justify-center
+                  text-[9px] font-bold font-mono border flex-shrink-0
+                  ${cfg.bg} ${cfg.text} ${cfg.border}
+                `}
+                style={{
+                  color: state === 'active' ? agent.color : state === 'done' ? 'var(--c-success)' : state === 'error' ? 'var(--c-danger)' : 'var(--c-text-muted)',
+                  animation: state === 'active' ? 'pulse-dot 1.5s ease-in-out infinite' : 'none',
+                }}
+              >
+                {state === 'done' ? '✓' : state === 'error' ? '✗' : agent.number}
               </div>
-              {idx < AGENTS.length-1 && (
-                <div style={{
-                  width:'8px', height:'1px',
-                  background:state==='done' ? '#A7F3D0' : 'var(--c-border)',
-                  transition:'background 0.3s',
-                }}/>
+              {idx < AGENTS.length - 1 && (
+                <div
+                  className="w-1 h-px"
+                  style={{ background: state === 'done' ? '#A7F3D0' : 'var(--c-border)' }}
+                />
               )}
             </div>
           )
@@ -460,90 +445,101 @@ function UploadZone({ docName, docReady, docList, isUploading, uploadError, onFi
     if (file) onFile(file)
   }
 
-  if (isUploading) return (
-    <div style={{
-      border:'1px solid var(--c-accent-bdr)', borderRadius:'8px',
-      background:'var(--c-accent-bg)', padding:'10px 14px',
-      display:'flex', alignItems:'center', gap:'10px',
-    }}>
-      <div style={{ display:'flex', gap:'4px' }}>
-        {[0,1,2].map(i => <span key={i} className="running-dot" style={{ background:'#6366F1' }} />)}
-      </div>
-      <span style={{ fontSize:'12px', color:'#6366F1', fontWeight:600 }}>Processing document…</span>
-    </div>
-  )
-
-  if (docReady && docList?.length > 0) return (
-    <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-      {/* Doc list */}
-      {docList.map((name, i) => (
-        <div key={i} style={{
-          border:'1px solid #A7F3D0', borderRadius:'6px',
-          background:'var(--c-success-bg)', padding:'7px 12px',
-          display:'flex', alignItems:'center', gap:'8px',
-        }}>
-          <span style={{ fontSize:'13px' }}>📄</span>
-          <span style={{
-            flex:1, fontSize:'12px', fontWeight:600, color:'var(--c-success)',
-            whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
-          }}>
-            {name}
-            {i === docList.length-1 && (
-              <span style={{
-                marginLeft:'6px', fontSize:'9px', fontWeight:700,
-                background:'#A7F3D0', color:'#065F46', borderRadius:'999px', padding:'1px 6px',
-              }}>latest</span>
-            )}
-          </span>
+  if (isUploading) {
+    return (
+      <div className="border border-accent-bdr rounded-lg bg-accent-bg px-3.5 py-3 flex items-center gap-2.5">
+        <div className="flex gap-1">
+          {[0, 1, 2].map(i => (
+            <span key={i} className="block w-1.5 h-1.5 rounded-full bg-accent animate-[pulse-dot_1.5s_ease-in-out_infinite]" />
+          ))}
         </div>
-      ))}
-
-      {/* Actions row */}
-      <div style={{ display:'flex', gap:'6px' }}>
-        <button onClick={() => addInputRef.current?.click()} style={{
-          flex:1, fontSize:'11px', fontWeight:600, color:'#6366F1',
-          background:'var(--c-accent-bg)', border:'1px dashed var(--c-accent-bdr)',
-          borderRadius:'6px', padding:'6px', cursor:'pointer', fontFamily:'Inter, sans-serif',
-        }}>+ Add doc</button>
-        <button onClick={onClearAll} style={{
-          fontSize:'11px', fontWeight:600, color:'var(--c-danger)',
-          background:'var(--c-danger-bg)', border:'1px solid var(--c-danger)',
-          borderRadius:'6px', padding:'6px 10px', cursor:'pointer', fontFamily:'Inter, sans-serif',
-        }}>Clear all</button>
+        <span className="text-sm font-semibold text-accent">Processing document…</span>
       </div>
+    )
+  }
 
-      {uploadError && (
-        <p style={{ fontSize:'11px', color:'var(--c-danger)', fontWeight:500 }}>{uploadError}</p>
-      )}
+  if (docReady && docList?.length > 0) {
+    return (
+      <div className="flex flex-col gap-2">
+        {/* Doc list */}
+        {docList.map((name, i) => (
+          <div
+            key={i}
+            className="border border-success/30 rounded-md bg-success-bg px-3 py-2 flex items-center gap-2"
+          >
+            <span className="text-sm">📄</span>
+            <span className="flex-1 text-xs font-semibold text-success truncate">
+              {name}
+              {i === docList.length - 1 && (
+                <span className="ml-1 text-[8px] font-bold bg-success text-white px-1.5 py-0.25 rounded-full">
+                  latest
+                </span>
+              )}
+            </span>
+          </div>
+        ))}
 
-      <input ref={addInputRef} type="file" accept=".pdf,.docx,.txt,.md"
-        style={{ display:'none' }}
-        onChange={e => { if (e.target.files?.[0]) onFile(e.target.files[0]) }} />
-    </div>
-  )
+        {/* Actions row */}
+        <div className="flex gap-1">
+          <button
+            onClick={() => addInputRef.current?.click()}
+            className="flex-1 text-[10px] font-semibold text-accent bg-accent-bg border border-dashed border-accent-bdr rounded-md py-1.5 cursor-pointer transition-colors hover:bg-accent/15"
+          >
+            + Add doc
+          </button>
+          <button
+            onClick={onClearAll}
+            className="text-[10px] font-semibold text-danger bg-danger-bg border border-danger rounded-md py-1.5 px-2.5 cursor-pointer transition-colors hover:bg-danger/15"
+          >
+            Clear all
+          </button>
+        </div>
+
+        {uploadError && (
+          <p className="text-[10px] font-medium text-danger">{uploadError}</p>
+        )}
+
+        <input
+          ref={addInputRef}
+          type="file"
+          accept=".pdf,.docx,.txt,.md"
+          className="hidden"
+          onChange={e => { if (e.target.files?.[0]) onFile(e.target.files[0]) }}
+        />
+      </div>
+    )
+  }
 
   return (
     <div
       onClick={() => inputRef.current?.click()}
       onDragOver={e => e.preventDefault()}
       onDrop={handleDrop}
-      style={{
-        border:`1.5px dashed ${uploadError ? 'var(--c-danger)' : 'var(--c-border)'}`,
-        borderRadius:'8px', background:'var(--c-surface-2)',
-        padding:'20px 14px', textAlign:'center', cursor:'pointer', transition:'all 0.15s',
-      }}
+      className={`
+        border-2 border-dashed rounded-lg bg-surface-2 px-5 py-7 text-center cursor-pointer
+        transition-all text-center
+        ${uploadError
+          ? 'border-danger'
+          : 'border-border hover:border-accent hover:bg-accent-bg'}
+      `}
     >
-      <div style={{ fontSize:'22px', marginBottom:'6px' }}>📎</div>
-      <p style={{ fontSize:'12px', fontWeight:600, color:'var(--c-text-2)', margin:'0 0 3px' }}>
+      <div className="text-2xl mb-1.5">📎</div>
+      <p className="text-sm font-semibold text-primary mb-0.5">
         Drop a PDF here or click to upload
       </p>
-      <p style={{ fontSize:'11px', color:'var(--c-text-muted)', margin:0 }}>PDF · DOCX · TXT · MD</p>
+      <p className="text-xs text-muted">
+        PDF · DOCX · TXT · MD
+      </p>
       {uploadError && (
-        <p style={{ fontSize:'11px', color:'var(--c-danger)', margin:'6px 0 0', fontWeight:500 }}>{uploadError}</p>
+        <p className="text-xs font-medium text-danger mt-1.5">{uploadError}</p>
       )}
-      <input ref={inputRef} type="file" accept=".pdf,.docx,.txt,.md"
-        style={{ display:'none' }}
-        onChange={e => { if (e.target.files?.[0]) onFile(e.target.files[0]) }} />
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,.docx,.txt,.md"
+        className="hidden"
+        onChange={e => { if (e.target.files?.[0]) onFile(e.target.files[0]) }}
+      />
     </div>
   )
 }
@@ -552,31 +548,22 @@ function UploadZone({ docName, docReady, docList, isUploading, uploadError, onFi
 function QueryHistoryDropdown({ history, onSelect, onClose }) {
   if (!history.length) return null
   return (
-    <div style={{
-      position:'absolute', top:'calc(100% + 4px)', left:0, right:0, zIndex:100,
-      background:'var(--c-surface)', border:'1px solid var(--c-border)',
-      borderRadius:'8px', boxShadow:'0 8px 24px rgba(0,0,0,0.12)',
-      overflow:'hidden', animation:'slideUp 0.15s ease-out',
-    }}>
-      <div style={{ padding:'6px 10px', borderBottom:'1px solid var(--c-border-in)' }}>
-        <span style={{ fontSize:'10px', fontWeight:600, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'0.06em' }}>
+    <div
+      className="absolute top-full left-0 right-0 z-50 bg-surface border border-border rounded-lg shadow-lg overflow-hidden animate-slide-up"
+    >
+      <div className="px-2.5 py-1.5 border-b border-border-in">
+        <span className="text-[10px] font-bold text-muted uppercase tracking-wider">
           Recent queries
         </span>
       </div>
       {history.map((q, i) => (
-        <button key={i} onClick={() => { onSelect(q); onClose() }} style={{
-          display:'block', width:'100%', textAlign:'left',
-          padding:'8px 12px', fontSize:'12px', color:'var(--c-text-2)',
-          background:'none', border:'none', cursor:'pointer',
-          borderBottom: i < history.length-1 ? '1px solid var(--c-border-in)' : 'none',
-          fontFamily:'Inter, sans-serif', lineHeight:1.4,
-          transition:'background 0.1s',
-        }}
-          onMouseEnter={e => e.currentTarget.style.background='var(--c-bg)'}
-          onMouseLeave={e => e.currentTarget.style.background='none'}
+        <button
+          key={i}
+          onClick={() => { onSelect(q); onClose() }}
+          className="block w-full text-left px-3 py-2 text-xs text-text-2 font-mono truncate hover:bg-bg transition-colors border-b border-border-in last:border-0"
         >
-          <span style={{ color:'var(--c-text-muted)', marginRight:'6px' }}>↑</span>
-          {q.length > 80 ? q.slice(0,80)+'…' : q}
+          <span className="text-muted mr-1.5">↑</span>
+          {q.length > 80 ? q.slice(0, 80) + '…' : q}
         </button>
       ))}
     </div>
@@ -608,14 +595,13 @@ export default function Playground({
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
-    el.style.height = Math.min(el.scrollHeight, 160)+'px'
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px'
   }, [query])
 
   useEffect(() => {
-    scrollAnchor.current?.scrollIntoView({ behavior:'smooth' })
+    scrollAnchor.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Close history dropdown on outside click
   useEffect(() => {
     if (!showHistory) return
     const handler = (e) => {
@@ -632,11 +618,11 @@ export default function Playground({
     const form = new FormData()
     form.append('file', file)
     try {
-      const res  = await fetch('/api/upload', { method:'POST', body:form })
+      const res = await fetch('/api/upload', { method: 'POST', body: form })
       const text = await res.text()
       let data = {}
       try { data = JSON.parse(text) } catch {}
-      if (!res.ok) throw new Error(data.detail || text.slice(0,200) || `HTTP ${res.status}`)
+      if (!res.ok) throw new Error(data.detail || text.slice(0, 200) || `HTTP ${res.status}`)
       onDocumentReady(data.doc_name, data.doc_list || [data.doc_name])
       setIsUploading(false)
     } catch (err) {
@@ -647,14 +633,14 @@ export default function Playground({
 
   const handleClearAll = useCallback(async () => {
     try {
-      await fetch('/api/docs', { method:'DELETE' })
+      await fetch('/api/docs', { method: 'DELETE' })
     } catch {}
     onDocumentCleared()
   }, [onDocumentCleared])
 
   // ── Patch a message ────────────────────────────────────────────────────────
   const patch = useCallback((id, delta) => {
-    setMessages(prev => prev.map(m => m.id===id ? { ...m, ...delta } : m))
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, ...delta } : m))
   }, [])
 
   // ── Export conversation ────────────────────────────────────────────────────
@@ -667,7 +653,7 @@ export default function Playground({
       return `**AC-RAG:** ${ans}${scores}\n`
     }).join('\n---\n\n')
 
-    const blob = new Blob([md], { type:'text/markdown' })
+    const blob = new Blob([md], { type: 'text/markdown' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href = url
@@ -686,42 +672,39 @@ export default function Playground({
     setLastRoute(null)
     onResetAll()
 
-    // Save to query history
-    const newHistory = [q, ...queryHistory.filter(h => h !== q)].slice(0,10)
+    const newHistory = [q, ...queryHistory.filter(h => h !== q)].slice(0, 10)
     setQueryHistory(newHistory)
     lsSet('ac_query_history', newHistory)
 
     const userId = nextId()
-    setMessages(prev => [...prev, { id:userId, type:'user', content:q }])
+    setMessages(prev => [...prev, { id: userId, type: 'user', content: q }])
 
     const asstId = nextId()
     streamIdRef.current = asstId
     setMessages(prev => [...prev, {
-      id:asstId, type:'assistant', query:q,
-      answer:'', isStreaming:true,
-      scores:null, sources:[],
-      route:null, intent:null, complexity:null,
-      rewritten:null, retries:null,
-      agentTrace:[], stageLogs:[], error:null,
+      id: asstId, type: 'assistant', query: q,
+      answer: '', isStreaming: true,
+      scores: null, sources: [],
+      route: null, intent: null, complexity: null,
+      rewritten: null, retries: null,
+      agentTrace: [], stageLogs: [], error: null,
     }])
 
     const traceMap = {}
 
     try {
-      // Last few completed turns, for follow-up/pronoun resolution server-side
-      // (query_analyzer.py caps how many it actually uses — safe to send more).
       const history = messages
         .filter(m => !m.isStreaming && !m.error && (m.content || m.answer))
         .slice(-6)
         .map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.content || m.answer }))
 
       const res = await fetch('/api/ask', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify({ query:q, history }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q, history }),
       })
       if (!res.ok) {
-        const data = await res.json().catch(()=>({}))
+        const data = await res.json().catch(() => ({}))
         throw new Error(data.detail || `HTTP ${res.status}`)
       }
 
@@ -733,7 +716,7 @@ export default function Playground({
         const { done, value } = await reader.read()
         if (done) break
 
-        buffer += decoder.decode(value, { stream:true })
+        buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
         buffer = lines.pop()
 
@@ -745,66 +728,53 @@ export default function Playground({
             if (ev.type === 'agent_start') {
               onAgentStateChange(ev.agent, 'active')
             }
-
             else if (ev.type === 'agent_done') {
               onAgentStateChange(ev.agent, 'done')
               onAgentMetaChange(ev.agent, {
-                summary:ev.summary||'', output:ev.output, duration_ms:ev.duration_ms,
+                summary: ev.summary || '', output: ev.output, duration_ms: ev.duration_ms,
               })
               traceMap[ev.agent] = {
-                agentId:ev.agent, summary:ev.summary||'', duration_ms:ev.duration_ms,
+                agentId: ev.agent, summary: ev.summary || '', duration_ms: ev.duration_ms,
               }
             }
-
             else if (ev.type === 'start') {
               setLastRoute(ev.route)
-              const meta = { route:ev.route, intent:ev.intent, complexity:ev.complexity, rewritten:ev.rewritten, retries:ev.retries, query:q }
+              const meta = { route: ev.route, intent: ev.intent, complexity: ev.complexity, rewritten: ev.rewritten, retries: ev.retries, query: q }
               onRunMetaChange?.(meta)
               patch(asstId, {
-                route:ev.route, intent:ev.intent, complexity:ev.complexity,
-                rewritten:ev.rewritten, retries:ev.retries||0,
+                route: ev.route, intent: ev.intent, complexity: ev.complexity,
+                rewritten: ev.rewritten, retries: ev.retries || 0,
               })
             }
-
             else if (ev.type === 'token') {
               setMessages(prev => prev.map(m =>
-                m.id===asstId ? { ...m, answer:m.answer+ev.text } : m
+                m.id === asstId ? { ...m, answer: m.answer + ev.text } : m
               ))
             }
-
             else if (ev.type === 'scores') {
-              patch(asstId, { scores:ev.data })
+              patch(asstId, { scores: ev.data })
             }
-
             else if (ev.type === 'sources') {
-              patch(asstId, { sources:ev.data })
+              patch(asstId, { sources: ev.data })
             }
-
             else if (ev.type === 'trace') {
-              patch(asstId, { stageLogs:ev.data })
+              patch(asstId, { stageLogs: ev.data })
             }
-
             else if (ev.type === 'done') {
               const trace = AGENTS.filter(a => traceMap[a.id]).map(a => traceMap[a.id])
-              patch(asstId, { isStreaming:false, agentTrace:trace, error:ev.error||null })
+              patch(asstId, { isStreaming: false, agentTrace: trace, error: ev.error || null })
               setIsRunning(false)
             }
-
             else if (ev.type === 'error') {
-              patch(asstId, { isStreaming:false, error:ev.message })
+              patch(asstId, { isStreaming: false, error: ev.message })
               setIsRunning(false)
             }
-
           } catch { /* ignore malformed SSE lines */ }
         }
       }
     } catch (err) {
-      patch(asstId, { isStreaming:false, error:err.message })
+      patch(asstId, { isStreaming: false, error: err.message })
       setIsRunning(false)
-      // Backend restarts (e.g. dev server auto-reload) wipe its in-memory document
-      // state, but this client's localStorage still says a doc is loaded — self-heal
-      // instead of leaving the UI stuck showing a document that no longer exists
-      // server-side (was previously a confusing dead-end, see 2026-08-20 bug report).
       if (/no document loaded/i.test(err.message)) {
         onDocumentCleared()
       }
@@ -812,34 +782,28 @@ export default function Playground({
   }, [query, docReady, isRunning, queryHistory, onResetAll, onAgentStateChange, onAgentMetaChange, onRunMetaChange, onDocumentCleared, patch])
 
   const handleKeyDown = (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key==='Enter') handleRun()
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleRun()
     if (e.key === 'Escape') setShowHistory(false)
   }
 
-  const userCount = messages.filter(m => m.type==='user').length
+  const userCount = messages.filter(m => m.type === 'user').length
 
   return (
-    <div style={{ flex:1, display:'flex', overflow:'hidden', background:'var(--c-bg)' }}>
-
-      {/* ── LEFT PANEL ─────────────────────────────────────────────── */}
-      <div style={{
-        width:'310px', flexShrink:0,
-        borderRight:'1px solid var(--c-border)',
-        background:'var(--c-surface)',
-        display:'flex', flexDirection:'column', overflow:'hidden',
-      }}>
-        <div style={{ padding:'14px 16px 12px', borderBottom:'1px solid var(--c-border)', flexShrink:0 }}>
-          <span style={{ fontSize:'11px', fontWeight:600, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'0.07em' }}>
+    <div className="flex-1 flex overflow-hidden bg-bg">
+      {/* ── LEFT PANEL ─────────────────────────────────────────────-- */}
+      <div className="w-72 flex-shrink-0 border-r border-border bg-surface flex flex-col overflow-hidden">
+        {/* Setup header */}
+        <div className="px-4 py-3.5 border-b border-border flex-shrink-0">
+          <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">
             Setup
           </span>
         </div>
 
-        <div style={{ flex:1, overflowY:'auto', padding:'14px', display:'flex', flexDirection:'column', gap:'14px' }}>
-
+        <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
           {/* Document upload */}
           <div>
-            <p style={{ fontSize:'10px', fontWeight:600, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'0.07em', margin:'0 0 7px' }}>
-              Documents {docList?.length > 0 && <span style={{ color:'var(--c-accent)' }}>({docList.length})</span>}
+            <p className="text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">
+              Documents {docList?.length > 0 && <span className="text-accent">({docList.length})</span>}
             </p>
             <UploadZone
               docName={docName} docReady={docReady} docList={docList}
@@ -848,31 +812,25 @@ export default function Playground({
             />
           </div>
 
-          {/* Query textarea with history */}
+          {/* Query input */}
           <div>
-            <p style={{ fontSize:'10px', fontWeight:600, color:'var(--c-text-muted)', textTransform:'uppercase', letterSpacing:'0.07em', margin:'0 0 7px' }}>
+            <p className="text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">
               Query
             </p>
-            <div ref={queryAreaRef} style={{ position:'relative' }}>
+            <div ref={queryAreaRef} className="relative">
               <textarea
                 ref={textareaRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a question about your document…"
+                placeholder="What is AC-RAG's accuracy on the benchmark?"
                 disabled={isRunning}
                 rows={3}
-                style={{
-                  width:'100%', boxSizing:'border-box',
-                  resize:'none', overflow:'hidden',
-                  padding:'10px 12px', fontSize:'13px',
-                  color:'var(--c-text)', background:'var(--c-surface-2)',
-                  border:'1px solid var(--c-border)', borderRadius:'8px',
-                  outline:'none', fontFamily:'Inter, sans-serif', lineHeight:1.6,
-                  transition:'border-color 0.15s',
-                }}
-                onFocus={e => { e.target.style.borderColor='#6366F1'; if (queryHistory.length) setShowHistory(true) }}
-                onBlur={e => { e.target.style.borderColor='var(--c-border)' }}
+                className="w-full resize-none overflow-hidden px-3 py-2.5 text-sm rounded-lg
+                  bg-surface-2 border border-border text-primary placeholder-muted
+                  focus:border-accent focus:bg-surface transition-all outline-none
+                  disabled:opacity-50"
+                onFocus={() => { if (queryHistory.length) setShowHistory(true) }}
               />
               {showHistory && queryHistory.length > 0 && (
                 <QueryHistoryDropdown
@@ -882,7 +840,7 @@ export default function Playground({
                 />
               )}
             </div>
-            <p style={{ fontSize:'10px', color:'var(--c-text-faint)', margin:'4px 0 0', textAlign:'right' }}>
+            <p className="text-[10px] text-text-faint mt-1 text-right">
               ⌘ + Enter to run
             </p>
           </div>
@@ -891,47 +849,46 @@ export default function Playground({
           <button
             onClick={handleRun}
             disabled={!query.trim() || !docReady || isRunning}
-            style={{
-              width:'100%', padding:'10px',
-              fontSize:'13px', fontWeight:600, color:'#FFFFFF',
-              background: (!query.trim()||!docReady||isRunning) ? 'var(--c-text-faint)' : '#6366F1',
-              border:'none', borderRadius:'8px',
-              cursor: (!query.trim()||!docReady||isRunning) ? 'not-allowed' : 'pointer',
-              display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
-              transition:'background 0.15s', fontFamily:'Inter, sans-serif',
-            }}
+            className={`
+              w-full py-2.5 text-sm font-semibold rounded-lg
+              flex items-center justify-center gap-2 transition-all
+              ${(!query.trim() || !docReady || isRunning)
+                ? 'bg-text-faint text-white cursor-not-allowed'
+                : 'bg-accent hover:bg-accent-hover text-white shadow-sm'}
+            `}
           >
             {isRunning ? (
-              <><div style={{ display:'flex', gap:'3px' }}>{[0,1,2].map(i=><span key={i} className="running-dot" style={{ background:'#FFFFFF' }}/>)}</div>Running…</>
-            ) : <>▶ Run Pipeline</>}
+              <>
+                <div className="flex gap-1">
+                  {[0, 1, 2].map(i => (
+                    <span key={i} className="block w-1.5 h-1.5 rounded-full bg-white animate-[pulse-dot_1.5s_ease-in-out_infinite]" />
+                  ))}
+                </div>
+                Running…
+              </>
+            ) : (
+              <>▶ Run Pipeline</>
+            )}
           </button>
 
           {/* Clear conversation */}
           {messages.length > 0 && !isRunning && (
             <button
               onClick={() => setMessages([])}
-              style={{
-                width:'100%', padding:'7px',
-                fontSize:'12px', fontWeight:500, color:'var(--c-text-sec)',
-                background:'transparent', border:'1px solid var(--c-border)',
-                borderRadius:'8px', cursor:'pointer',
-                fontFamily:'Inter, sans-serif', transition:'all 0.15s',
-              }}
-              onMouseOver={e => { e.currentTarget.style.borderColor='var(--c-text-muted)'; e.currentTarget.style.color='var(--c-text)' }}
-              onMouseOut={e => { e.currentTarget.style.borderColor='var(--c-border)'; e.currentTarget.style.color='var(--c-text-sec)' }}
+              className="w-full py-1.5 text-xs font-medium text-secondary hover:text-primary hover:bg-surface-2 border border-border rounded-lg transition-colors"
             >
               🗑 Clear conversation
             </button>
           )}
 
           {/* Pipeline step progress */}
-          <div style={{ borderTop:'1px solid var(--c-border-in)', paddingTop:'14px' }}>
+          <div className="border-t border-border-in pt-3.5">
             <PipelineProgress agentStates={agentStates} />
           </div>
 
           {isRunning && (
-            <div style={{ background:'var(--c-accent-bg)', border:'1px solid var(--c-accent-bdr)', borderRadius:'8px', padding:'10px 12px' }}>
-              <p style={{ fontSize:'11px', color:'var(--c-accent)', margin:0, lineHeight:1.5 }}>
+            <div className="bg-accent-bg border border-accent-bdr rounded-lg px-3 py-2">
+              <p className="text-xs text-accent">
                 💡 Switch to the <strong>Pipeline</strong> tab to inspect each agent live
               </p>
             </div>
@@ -939,46 +896,30 @@ export default function Playground({
         </div>
       </div>
 
-      {/* ── RIGHT PANEL ────────────────────────────────────────────── */}
-      <div style={{ flex:1, display:'flex', flexDirection:'column', background:'var(--c-bg)', overflow:'hidden' }}>
-
+      {/* ── RIGHT PANEL ─────────────────────────────────────────────-- */}
+      <div className="flex-1 flex flex-col bg-bg overflow-hidden">
         {/* Chat header */}
-        <div style={{
-          padding:'11px 20px', borderBottom:'1px solid var(--c-border)',
-          background:'var(--c-surface)', flexShrink:0,
-          display:'flex', alignItems:'center', justifyContent:'space-between',
-        }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-            <span style={{ fontSize:'15px' }}>💬</span>
-            <span style={{ fontSize:'13px', fontWeight:600, color:'var(--c-text)' }}>Conversation</span>
+        <div className="px-5 py-2.5 border-b border-border bg-surface flex-shrink-0 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-base">💬</span>
+            <span className="text-sm font-semibold text-primary">Conversation</span>
             {userCount > 0 && (
-              <span style={{
-                fontSize:'10px', fontFamily:'monospace', color:'var(--c-text-muted)',
-                background:'var(--c-bg)', borderRadius:'999px', padding:'1px 8px',
-              }}>{userCount} Q{userCount!==1?'s':''}</span>
+              <span className="text-[10px] font-mono text-muted bg-bg px-2 py-0.5 rounded-full">
+                {userCount} Q{userCount !== 1 ? 's' : ''}
+              </span>
             )}
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+          <div className="flex items-center gap-2">
             {docName && (
-              <span style={{
-                fontSize:'10px', color:'var(--c-text-muted)',
-                background:'var(--c-bg)', border:'1px solid var(--c-border)',
-                borderRadius:'6px', padding:'2px 8px', fontFamily:'monospace',
-                maxWidth:'200px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
-              }}>
+              <span className="text-[10px] text-muted bg-bg border border-border rounded-md px-2 py-0.5 font-mono max-w-[180px] truncate">
                 📄 {docName}
               </span>
             )}
             {messages.length > 0 && (
-              <button onClick={handleExport} title="Export conversation as Markdown"
-                style={{
-                  fontSize:'11px', fontWeight:600, color:'var(--c-text-sec)',
-                  background:'var(--c-bg)', border:'1px solid var(--c-border)',
-                  borderRadius:'6px', padding:'3px 10px',
-                  cursor:'pointer', fontFamily:'Inter, sans-serif', transition:'all 0.15s',
-                }}
-                onMouseOver={e => { e.currentTarget.style.color='var(--c-text)'; e.currentTarget.style.borderColor='var(--c-text-muted)' }}
-                onMouseOut={e => { e.currentTarget.style.color='var(--c-text-sec)'; e.currentTarget.style.borderColor='var(--c-border)' }}
+              <button
+                onClick={handleExport}
+                title="Export conversation as Markdown"
+                className="text-xs font-semibold text-secondary hover:text-primary hover:bg-surface-2 border border-border rounded-md px-2.5 py-1 transition-colors"
               >
                 ⬇ Export
               </button>
@@ -990,46 +931,41 @@ export default function Playground({
         <LivePipelineStrip agentStates={agentStates} isRunning={isRunning} lastRoute={lastRoute} />
 
         {/* Messages */}
-        <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
-
+        <div className="flex-1 overflow-y-auto px-6 py-5">
           {messages.length === 0 && (
-            <div style={{
-              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-              minHeight:'60%', gap:'14px', opacity:0.75,
-            }}>
-              <div style={{
-                width:'56px', height:'56px', borderRadius:'18px',
-                background:'var(--c-surface)', border:'1px solid var(--c-border)',
-                display:'flex', alignItems:'center', justifyContent:'center', fontSize:'26px',
-                boxShadow:'0 2px 8px rgba(0,0,0,0.06)',
-              }}>🧠</div>
-              <div style={{ textAlign:'center' }}>
-                <p style={{ fontSize:'15px', fontWeight:700, color:'var(--c-text)', margin:'0 0 6px' }}>AC-RAG ready</p>
-                <p style={{ fontSize:'13px', color:'var(--c-text-muted)', margin:0, lineHeight:1.6 }}>
-                  {docReady
-                    ? 'Type your question on the left and press ▶ Run Pipeline'
-                    : 'Upload a document on the left to get started'}
-                </p>
+            <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in">
+              <div className="w-14 h-14 rounded-2xl bg-surface border border-border flex items-center justify-center text-2xl mb-4">
+                🧠
               </div>
-              <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center' }}>
-                {['What is AC-RAG?', 'Summarize the methodology', 'Compare accuracy metrics'].map(s=>(
-                  <button key={s} disabled={!docReady||isRunning}
-                    onClick={() => { if (docReady&&!isRunning) { setQuery(s); textareaRef.current?.focus() } }}
-                    style={{
-                      fontSize:'11px', color:'#6366F1',
-                      background:'var(--c-accent-bg)', border:'1px solid var(--c-accent-bdr)',
-                      borderRadius:'999px', padding:'4px 12px',
-                      cursor: docReady ? 'pointer' : 'default',
-                      fontFamily:'Inter, sans-serif', opacity: docReady ? 1 : 0.5,
-                    }}
-                  >{s}</button>
-                ))}
-              </div>
+              <p className="text-primary font-medium mb-1">AC-RAG is ready</p>
+              <p className="text-secondary text-sm">
+                {docReady
+                  ? 'Type your question on the left and press ▶ Run Pipeline'
+                  : 'Upload a document on the left to get started'}
+              </p>
+
+              {docReady && (
+                <div className="mt-5 flex gap-2 flex-wrap justify-center">
+                  {[
+                    'What is AC-RAG?',
+                    'Summarize the methodology',
+                    'Compare accuracy metrics',
+                  ].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => { setQuery(s); textareaRef.current?.focus() }}
+                      className="text-xs text-accent bg-accent-bg border border-accent-bdr rounded-full px-3 py-1 cursor-pointer transition-all"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {messages.map(msg =>
-            msg.type==='user'
+            msg.type === 'user'
               ? <UserBubble key={msg.id} content={msg.content} />
               : <AssistantCard key={msg.id} message={msg} />
           )}

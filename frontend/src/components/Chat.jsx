@@ -40,8 +40,10 @@ export default function Chat({ messages, docName, onAsk, onChange }) {
             <FileText size={13} className="text-secondary" />
             <span className="text-sm text-secondary max-w-[200px] truncate">{docName}</span>
           </div>
-          <button onClick={onChange}
-            className="flex items-center gap-1.5 text-sm text-secondary hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-surface border border-transparent hover:border-border">
+          <button
+            onClick={onChange}
+            className="flex items-center gap-1.5 text-sm text-secondary hover:text-primary transition-colors px-3 py-1.5 rounded-lg hover:bg-surface border border-transparent hover:border-border"
+          >
             <RefreshCw size={13} />
             Change
           </button>
@@ -77,8 +79,11 @@ export default function Chat({ messages, docName, onAsk, onChange }) {
             disabled={isStreaming}
             className="flex-1 bg-transparent text-primary placeholder-muted text-sm outline-none disabled:opacity-50"
           />
-          <button onClick={submit} disabled={!input.trim() || isStreaming}
-            className="w-8 h-8 rounded-xl bg-accent hover:bg-accent-hover disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0 transition-colors">
+          <button
+            onClick={submit}
+            disabled={!input.trim() || isStreaming}
+            className="w-8 h-8 rounded-xl bg-accent hover:bg-accent-hover disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0 transition-colors"
+          >
             <Send size={14} className="text-white" />
           </button>
         </div>

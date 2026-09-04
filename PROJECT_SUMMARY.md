@@ -1,7 +1,7 @@
 # AC-RAG: Agent-Controlled Retrieval-Augmented Generation
 ## Complete Project Summary — Architecture, Design, Implementation & Decisions
 
-**Author:** SRKR · 2025–26  
+**Author:** SRKR · 2026–27  
 **Stack:** Python · FastAPI · LangGraph · LangChain · FAISS · React · Vite  
 **Purpose:** Research-grade agentic RAG system for document question-answering
 
@@ -161,9 +161,9 @@ Raw File (PDF / DOCX / TXT / HTML / MD)
     │    word_count  = len(content.split())
     │
     ▼  vectorstore/embeddings.py
-    │  Model: sentence-transformers/all-MiniLM-L6-v2
+    │  Model: text-embedding-3-large (OpenAI default — see config/settings.py)
+    │         Alternative: sentence-transformers/all-MiniLM-L6-v2
     │         (local, free, 384-dim dense embeddings)
-    │         Alternative: text-embedding-3-small (OpenAI, better quality)
     │
     ▼  vectorstore/store.py → VectorStoreManager
     │  FAISS index built via FAISS.from_documents()
@@ -599,7 +599,7 @@ LLM_TEMPERATURE = 0.0              # deterministic — critical for faithfulness
 LLM_MAX_TOKENS  = 2048
 
 # ── Embeddings ────────────────────────────────────────────────────────────────
-EMBEDDING_MODEL    = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL    = "text-embedding-3-large"
 VECTORSTORE_BACKEND = "faiss"      # "faiss" | "chroma"
 
 # ── Ingestion ─────────────────────────────────────────────────────────────────
@@ -772,4 +772,4 @@ python -m evaluation.runner --test-set evaluation/test_set_sample.json --config 
 ---
 
 *AC-RAG — Agent-Controlled RAG for Reliable Document Question Answering*  
-*SRKR Engineering · 2025–26*
+*SRKR Engineering · 2026–27*

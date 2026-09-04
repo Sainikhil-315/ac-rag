@@ -7,7 +7,6 @@ import Playground from './components/playground/Playground'
 import Results from './components/results/Results'
 import Landing from './components/Landing'
 
-// ── localStorage helpers ───────────────────────────────────────────────────────
 function lsGet(key, fallback) {
   try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback }
   catch { return fallback }
@@ -18,7 +17,7 @@ function lsSet(key, value) {
 
 export default function App() {
   const [showLanding,   setShowLanding]   = useState(() => !lsGet('ac_doc_ready', false))
-  const [activeTab,     setActiveTab]     = useState('Pipeline')
+  const [activeTab,     setActiveTab]     = useState('Playground')
   const [selectedAgent, setSelectedAgent] = useState(null)
 
   // Pipeline live state
@@ -36,7 +35,6 @@ export default function App() {
   // Conversation history
   const [messages, setMessages] = useState(() => lsGet('ac_messages', []))
 
-  // Persist to localStorage whenever state changes
   useEffect(() => { lsSet('ac_doc_name',    docName)    }, [docName])
   useEffect(() => { lsSet('ac_doc_ready',   docReady)   }, [docReady])
   useEffect(() => { lsSet('ac_doc_list',    docList)    }, [docList])
@@ -96,6 +94,8 @@ export default function App() {
   const handleRunMetaChange = (meta) =>
     setRunHistory(prev => [meta, ...prev].slice(0, 10))
 
+  const lastRoute = runHistory[0]?.route ?? null
+
   if (showLanding) {
     return (
       <ThemeProvider>
@@ -104,20 +104,12 @@ export default function App() {
     )
   }
 
-  const lastRoute = runHistory[0]?.route ?? null
-
   return (
     <ThemeProvider>
-      <div style={{
-        height: '100vh', display: 'flex', flexDirection: 'column',
-        background: 'var(--c-bg)',
-        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-        overflow: 'hidden',
-      }}>
+      <div className="h-screen flex flex-col bg-bg font-sans overflow-hidden">
         <Header activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
+        <div className="flex-1 flex overflow-hidden">
           {activeTab === 'Pipeline' && (
             <>
               <PipelineCanvas
@@ -155,7 +147,6 @@ export default function App() {
           {activeTab === 'Results' && (
             <Results agentMeta={agentMeta} runHistory={runHistory} />
           )}
-
         </div>
       </div>
     </ThemeProvider>

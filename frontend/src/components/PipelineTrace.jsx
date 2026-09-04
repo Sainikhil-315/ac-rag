@@ -21,7 +21,7 @@ export default function PipelineTrace({ stages }) {
           const stageColor = STAGE_COLORS[stage.stage] || 'bg-surface-2 text-secondary border-border'
           return (
             <div key={i} className="flex items-center gap-3">
-              <span className={`${STATUS_COLORS[stage.status] || 'text-secondary'} w-4 text-xs font-mono`}>
+              <span className={`w-4 text-xs font-mono ${STATUS_COLORS[stage.status] || 'text-secondary'}`}>
                 {STATUS_ICONS[stage.status] || '·'}
               </span>
               <span className={`text-[11px] font-mono px-2 py-0.5 rounded border ${stageColor}`}>

@@ -4,7 +4,7 @@ import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle } from 'lucide
 export default function Upload({ onUploaded }) {
   const [dragging, setDragging] = useState(false)
   const [file, setFile] = useState(null)
-  const [status, setStatus] = useState('idle') // idle | uploading | processing | done | error
+  const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
   const [progress, setProgress] = useState('')
   const inputRef = useRef()
@@ -122,8 +122,12 @@ export default function Upload({ onUploaded }) {
               </div>
               <p className="text-primary font-medium mb-1">Upload failed</p>
               <p className="text-secondary text-sm mb-4">{error}</p>
-              <button onClick={(e) => { e.stopPropagation(); setStatus('idle'); setFile(null) }}
-                className="text-xs text-accent hover:text-accent-hover transition-colors">Try again</button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setStatus('idle'); setFile(null) }}
+                className="text-xs text-accent hover:text-accent-hover transition-colors"
+              >
+                Try again
+              </button>
             </div>
           )}
         </div>

@@ -1,318 +1,13 @@
 import { useState, useEffect } from 'react'
 import { AGENTS } from '../../constants/agents'
 
-// ─── agentMeta shape (set by Playground during a live run) ───────────────────
-// null                                  → no run yet
-// { summary, input, output, duration_ms, error }
-
-export default function AgentInspector({ selectedAgentId, agentStates, agentMeta }) {
-  const [innerTab, setInnerTab] = useState('overview')
-
-  // Reset inner tab to overview whenever a different agent is selected
-  useEffect(() => { setInnerTab('overview') }, [selectedAgentId])
-
-  const agent = AGENTS.find(a => a.id === selectedAgentId)
-
-  // ── empty state ──────────────────────────────────────────────────────────
-  if (!agent) {
-    return (
-      <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        gap: '10px', background: 'var(--c-surface-2)',
-      }}>
-        <div style={{
-          width: '44px', height: '44px', borderRadius: '12px',
-          background: 'var(--c-bg)', border: '1px solid var(--c-border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '20px',
-        }}>🔬</div>
-        <p style={{ fontSize: '13px', color: 'var(--c-text-sec)', fontWeight: 500 }}>
-          Select an agent to inspect
-        </p>
-        <p style={{ fontSize: '11px', color: 'var(--c-text-faint)', maxWidth: '210px', textAlign: 'center', lineHeight: 1.5 }}>
-          Click any node in the pipeline to see its schema, description, and live trace
-        </p>
-      </div>
-    )
-  }
-
-  const state = agentStates?.[agent.id] || 'idle'
-  const meta  = agentMeta?.[agent.id]  ?? null   // null | { summary, input, output, duration_ms, error }
-
-  const BADGE = {
-    idle:   { label: 'Idle',    bg: 'var(--c-bg)',          color: 'var(--c-text-sec)', dot: 'var(--c-text-faint)' },
-    active: { label: 'Running', bg: 'var(--c-accent-bg)',   color: 'var(--c-accent)',   dot: 'var(--c-accent)'     },
-    done:   { label: 'Done',    bg: 'var(--c-success-bg)',  color: 'var(--c-success)',  dot: 'var(--c-success)'    },
-    error:  { label: 'Error',   bg: 'var(--c-danger-bg)',   color: 'var(--c-danger)',   dot: 'var(--c-danger)'     },
-  }[state]
-
-  return (
-    <div style={{
-      flex: 1, display: 'flex', flexDirection: 'column',
-      background: 'var(--c-surface-2)', overflow: 'hidden',
-      borderTop: `3px solid ${agent.color}`,
-    }}>
-
-      {/* ── Inspector header ───────────────────────────────────────────── */}
-      <div style={{
-        padding: '14px 20px 0',
-        background: 'var(--c-surface)',
-        borderBottom: '1px solid var(--c-border)',
-        flexShrink: 0,
-      }}>
-        {/* Agent identity row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-          <div style={{
-            width: '38px', height: '38px', borderRadius: '10px',
-            background: agent.lightBg, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '18px',
-          }}>
-            {agent.icon}
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-              <span style={{ fontSize: '11px', fontFamily: 'monospace', color: agent.color, fontWeight: 700 }}>
-                {agent.number}
-              </span>
-              <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--c-text)' }}>
-                {agent.title}
-              </span>
-            </div>
-            <p style={{ fontSize: '11px', color: 'var(--c-text-sec)', margin: 0, marginTop: '2px' }}>
-              {agent.subtitle}
-            </p>
-          </div>
-
-          {/* State badge */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '5px',
-            background: BADGE.bg, borderRadius: '999px',
-            padding: '3px 10px', flexShrink: 0,
-          }}>
-            <div style={{
-              width: '6px', height: '6px', borderRadius: '50%',
-              background: BADGE.dot,
-              animation: state === 'active' ? 'pulse-dot 1.5s ease-in-out infinite' : 'none',
-            }} />
-            <span style={{ fontSize: '11px', fontWeight: 600, color: BADGE.color }}>
-              {BADGE.label}
-            </span>
-          </div>
-        </div>
-
-        {/* Inner tab bar */}
-        <div style={{ display: 'flex', gap: '0' }}>
-          {['overview', 'trace'].map(tab => {
-            const active = innerTab === tab
-            const label  = tab === 'overview' ? 'Overview' : 'Live Trace'
-            return (
-              <button key={tab} onClick={() => setInnerTab(tab)} style={{
-                padding: '7px 16px',
-                fontSize: '12px', fontWeight: active ? 600 : 500,
-                color: active ? agent.color : 'var(--c-text-sec)',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: active ? `2px solid ${agent.color}` : '2px solid transparent',
-                cursor: 'pointer',
-                transition: 'color 0.15s, border-color 0.15s',
-                fontFamily: 'Inter, sans-serif',
-                marginBottom: '-1px',
-              }}>
-                {label}
-                {tab === 'trace' && meta && (
-                  <span style={{
-                    marginLeft: '5px', fontSize: '10px', fontWeight: 600,
-                    background: state === 'error' ? 'var(--c-danger-bg)' : 'var(--c-success-bg)',
-                    color: state === 'error' ? 'var(--c-danger)' : 'var(--c-success)',
-                    borderRadius: '999px', padding: '1px 6px',
-                  }}>
-                    {state === 'error' ? 'err' : state === 'active' ? '…' : '✓'}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* ── Tab content ────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-        {innerTab === 'overview' && (
-          <OverviewTab agent={agent} />
-        )}
-
-        {innerTab === 'trace' && (
-          <TraceTab state={state} meta={meta} agent={agent} />
-        )}
-
-      </div>
-    </div>
-  )
-}
-
-// ─── Overview tab ─────────────────────────────────────────────────────────────
-function OverviewTab({ agent }) {
-  return (
-    <>
-      <Section label="Description">
-        <p style={{ fontSize: '13px', color: 'var(--c-text-2)', lineHeight: 1.65, margin: 0 }}>
-          {agent.description}
-        </p>
-      </Section>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <Section label="Input schema">
-          <Mono>{agent.input}</Mono>
-        </Section>
-        <Section label="Output schema">
-          <Mono>{agent.output}</Mono>
-        </Section>
-      </div>
-
-      <Section label="Example">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <IORow label="In"  value={agent.example.in}  color="#3F3F46" />
-          <IORow label="Out" value={agent.example.out} color="#18181B" />
-        </div>
-      </Section>
-    </>
-  )
-}
-
-// ─── Live Trace tab ───────────────────────────────────────────────────────────
-function TraceTab({ state, meta, agent }) {
-
-  // No run yet
-  if (!meta && state === 'idle') {
-    return (
-      <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        gap: '8px', paddingTop: '40px',
-      }}>
-        <div style={{ fontSize: '28px', opacity: 0.3 }}>{agent.icon}</div>
-        <p style={{ fontSize: '13px', color: 'var(--c-text-muted)', fontWeight: 500 }}>No run data yet</p>
-        <p style={{ fontSize: '11px', color: 'var(--c-text-faint)', textAlign: 'center', maxWidth: '200px', lineHeight: 1.5 }}>
-          Switch to the Playground tab, upload a PDF and run a query to see live data here
-        </p>
-      </div>
-    )
-  }
-
-  // Currently running
-  if (state === 'active') {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-bdr)',
-          borderRadius: '8px', padding: '12px 14px',
-        }}>
-          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-            {[0, 1, 2].map(i => (
-              <span key={i} className="running-dot" style={{ background: agent.color }} />
-            ))}
-          </div>
-          <span style={{ fontSize: '13px', color: agent.color, fontWeight: 600 }}>
-            Agent is running…
-          </span>
-        </div>
-        {/* Show previous input if available */}
-        {meta?.input && (
-          <Section label="Input (this run)">
-            <JsonBlock data={meta.input} accentColor={agent.color} />
-          </Section>
-        )}
-      </div>
-    )
-  }
-
-  // Error state
-  if (state === 'error') {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <div style={{
-          background: 'var(--c-danger-bg)', border: '1px solid var(--c-danger)',
-          borderRadius: '8px', padding: '12px 14px',
-        }}>
-          <p style={{ fontSize: '12px', color: 'var(--c-danger)', fontWeight: 600, margin: '0 0 4px' }}>
-            Agent failed
-          </p>
-          <p style={{ fontSize: '12px', color: 'var(--c-danger)', margin: 0, fontFamily: 'monospace', opacity: 0.8 }}>
-            {meta?.error || 'Unknown error'}
-          </p>
-        </div>
-        {meta?.input && (
-          <Section label="Input at failure">
-            <JsonBlock data={meta.input} accentColor="#EF4444" />
-          </Section>
-        )}
-      </div>
-    )
-  }
-
-  // Done — show full trace
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-      {/* Timing chip */}
-      {meta?.duration_ms != null && (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <Chip label="Duration" value={`${meta.duration_ms} ms`} color={agent.color} />
-          {meta?.summary && <Chip label="Summary" value={meta.summary} color={agent.color} />}
-        </div>
-      )}
-
-      {/* Summary (if no timing chip showed it) */}
-      {meta?.summary && meta?.duration_ms == null && (
-        <Section label="Summary">
-          <Mono accent color={agent.color}>{meta.summary}</Mono>
-        </Section>
-      )}
-
-      {/* Input */}
-      {meta?.input != null && (
-        <Section label="Input (actual)">
-          <JsonBlock data={meta.input} accentColor={agent.color} />
-        </Section>
-      )}
-
-      {/* Output */}
-      {meta?.output != null && (
-        <Section label="Output (actual)">
-          <JsonBlock data={meta.output} accentColor={agent.color} />
-        </Section>
-      )}
-
-      {/* Fallback: plain summary text if no structured data */}
-      {!meta?.input && !meta?.output && meta?.summary && (
-        <Section label="Output">
-          <Mono accent color={agent.color}>{meta.summary}</Mono>
-        </Section>
-      )}
-
-    </div>
-  )
-}
-
-// ─── Reusable primitives ──────────────────────────────────────────────────────
 function Section({ label, children }) {
   return (
     <div>
-      <p style={{
-        fontSize: '10px', fontWeight: 600, color: 'var(--c-text-muted)',
-        textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 6px 0',
-      }}>
+      <p className="text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">
         {label}
       </p>
-      <div style={{
-        background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-        borderRadius: '8px', padding: '10px 12px',
-      }}>
+      <div className="bg-surface border border-border rounded-lg p-3">
         {children}
       </div>
     </div>
@@ -322,18 +17,10 @@ function Section({ label, children }) {
 function IORow({ label, value, color }) {
   return (
     <div>
-      <span style={{
-        fontSize: '10px', fontWeight: 700, color: 'var(--c-text-muted)',
-        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px',
-        display: 'block',
-      }}>
+      <span className="text-[9px] font-bold text-muted uppercase tracking-wider block mb-1">
         {label}
       </span>
-      <pre style={{
-        margin: 0, fontSize: '11.5px',
-        fontFamily: 'JetBrains Mono, Fira Code, monospace',
-        color: color || 'var(--c-text-2)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.6,
-      }}>
+      <pre className="text-[11px] font-mono leading-relaxed whitespace-pre-wrap break-words" style={{ color: color || 'var(--c-text-2)' }}>
         {value}
       </pre>
     </div>
@@ -342,12 +29,10 @@ function IORow({ label, value, color }) {
 
 function Mono({ children, accent, color }) {
   return (
-    <pre style={{
-      margin: 0, fontSize: '11.5px',
-      fontFamily: 'JetBrains Mono, Fira Code, monospace',
-      color: accent ? (color || 'var(--c-accent)') : 'var(--c-text-2)',
-      whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.6,
-    }}>
+    <pre
+      className="text-[11px] font-mono leading-relaxed whitespace-pre-wrap break-words"
+      style={{ color: accent ? (color || 'var(--c-accent)') : 'var(--c-text-2)' }}
+    >
       {children}
     </pre>
   )
@@ -355,32 +40,23 @@ function Mono({ children, accent, color }) {
 
 function Chip({ label, value, color }) {
   return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'center', gap: '5px',
-      background: 'var(--c-surface)', border: '1px solid var(--c-border)',
-      borderRadius: '6px', padding: '4px 10px',
-    }}>
-      <span style={{ fontSize: '10px', color: 'var(--c-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+    <div className="inline-flex items-center gap-1.5 bg-surface border border-border rounded-md px-2.5 py-1">
+      <span className="text-[9px] font-semibold text-muted uppercase tracking-wider">
         {label}
       </span>
-      <span style={{ fontSize: '12px', color: color || 'var(--c-accent)', fontWeight: 600, fontFamily: 'monospace' }}>
+      <span className="text-[11px] font-semibold font-mono" style={{ color: color || 'var(--c-accent)' }}>
         {value}
       </span>
     </div>
   )
 }
 
-// Renders an object as syntax-highlighted key: value lines
 function JsonBlock({ data, accentColor }) {
   if (data === null || data === undefined) return null
 
   if (typeof data === 'string') {
     return (
-      <pre style={{
-        margin: 0, fontSize: '11.5px',
-        fontFamily: 'JetBrains Mono, Fira Code, monospace',
-        color: 'var(--c-text-2)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.6,
-      }}>
+      <pre className="text-[11px] font-mono leading-relaxed whitespace-pre-wrap break-words" style={{ color: 'var(--c-text-2)' }}>
         {data}
       </pre>
     )
@@ -389,15 +65,18 @@ function JsonBlock({ data, accentColor }) {
   const lines = formatObject(data)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+    <div className="flex flex-col gap-0.5">
       {lines.map((line, i) => (
-        <div key={i} style={{ display: 'flex', gap: '8px', fontSize: '11.5px', fontFamily: 'JetBrains Mono, Fira Code, monospace', lineHeight: 1.6 }}>
+        <div
+          key={i}
+          className="flex gap-2 text-[11px] font-mono leading-relaxed"
+        >
           {line.key != null && (
-            <span style={{ color: accentColor, fontWeight: 600, flexShrink: 0 }}>
+            <span className="flex-shrink-0 font-semibold" style={{ color: accentColor || 'var(--c-accent)' }}>
               {line.key}:
             </span>
           )}
-          <span style={{ color: 'var(--c-text-2)', wordBreak: 'break-word' }}>
+          <span className="break-words" style={{ color: 'var(--c-text-2)' }}>
             {line.value}
           </span>
         </div>
@@ -406,7 +85,6 @@ function JsonBlock({ data, accentColor }) {
   )
 }
 
-// Converts an object into a flat array of { key, value } pairs for display
 function formatObject(obj, prefix = '') {
   const lines = []
   for (const [k, v] of Object.entries(obj)) {
@@ -420,4 +98,244 @@ function formatObject(obj, prefix = '') {
     }
   }
   return lines
+}
+
+function OverviewTab({ agent }) {
+  return (
+    <>
+      <Section label="Description">
+        <p className="text-sm text-text-2 leading-relaxed">
+          {agent.description}
+        </p>
+      </Section>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Section label="Input schema">
+          <Mono>{agent.input}</Mono>
+        </Section>
+        <Section label="Output schema">
+          <Mono>{agent.output}</Mono>
+        </Section>
+      </div>
+
+      <Section label="Example">
+        <div className="flex flex-col gap-2.5">
+          <IORow label="In"  value={agent.example.in}  color="#3F3F46" />
+          <IORow label="Out" value={agent.example.out} color="#18181B" />
+        </div>
+      </Section>
+    </>
+  )
+}
+
+function TraceTab({ state, meta, agent }) {
+  if (!meta && state === 'idle') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-2 pt-10">
+        <div className="text-2xl opacity-25">{agent.icon}</div>
+        <p className="text-sm text-muted font-medium">No run data yet</p>
+        <p className="text-xs text-text-faint text-center max-w-[220px] leading-relaxed">
+          Switch to the Playground tab, upload a PDF and run a query to see live data here
+        </p>
+      </div>
+    )
+  }
+
+  if (state === 'active') {
+    return (
+      <div className="flex flex-col gap-3.5">
+        <div className="flex items-center gap-2.5 bg-accent-bg border border-accent-bdr rounded-lg px-3.5 py-3">
+          <div className="flex gap-1 items-center">
+            {[0, 1, 2].map(i => (
+              <span key={i} className="block w-1 h-1 rounded-full bg-accent animate-[pulse-dot_1.5s_ease-in-out_infinite]" />
+            ))}
+          </div>
+          <span className="text-sm font-semibold" style={{ color: agent.color }}>
+            Agent is running…
+          </span>
+        </div>
+        {meta?.input && (
+          <Section label="Input (this run)">
+            <JsonBlock data={meta.input} accentColor={agent.color} />
+          </Section>
+        )}
+      </div>
+    )
+  }
+
+  if (state === 'error') {
+    return (
+      <div className="flex flex-col gap-3.5">
+        <div className="bg-danger-bg border border-danger rounded-lg px-3.5 py-3">
+          <p className="text-xs font-semibold text-danger mb-1">Agent failed</p>
+          <p className="text-xs font-mono opacity-80" style={{ color: 'var(--c-danger)' }}>
+            {meta?.error || 'Unknown error'}
+          </p>
+        </div>
+        {meta?.input && (
+          <Section label="Input at failure">
+            <JsonBlock data={meta.input} accentColor="#EF4444" />
+          </Section>
+        )}
+      </div>
+    )
+  }
+
+  // Done — full trace
+  return (
+    <div className="flex flex-col gap-3.5">
+      {meta?.duration_ms != null && (
+        <div className="flex gap-2 flex-wrap">
+          <Chip label="Duration" value={`${meta.duration_ms} ms`} color={agent.color} />
+          {meta?.summary && <Chip label="Summary" value={meta.summary} color={agent.color} />}
+        </div>
+      )}
+
+      {meta?.summary && meta?.duration_ms == null && (
+        <Section label="Summary">
+          <Mono accent color={agent.color}>{meta.summary}</Mono>
+        </Section>
+      )}
+
+      {meta?.input != null && (
+        <Section label="Input (actual)">
+          <JsonBlock data={meta.input} accentColor={agent.color} />
+        </Section>
+      )}
+
+      {meta?.output != null && (
+        <Section label="Output (actual)">
+          <JsonBlock data={meta.output} accentColor={agent.color} />
+        </Section>
+      )}
+
+      {!meta?.input && !meta?.output && meta?.summary && (
+        <Section label="Output">
+          <Mono accent color={agent.color}>{meta.summary}</Mono>
+        </Section>
+      )}
+    </div>
+  )
+}
+
+export default function AgentInspector({ selectedAgentId, agentStates, agentMeta }) {
+  const [innerTab, setInnerTab] = useState('overview')
+
+  useEffect(() => { setInnerTab('overview') }, [selectedAgentId])
+
+  const agent = AGENTS.find(a => a.id === selectedAgentId)
+
+  if (!agent) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-2.5 bg-surface-2">
+        <div className="w-11 h-11 rounded-xl bg-surface border border-border flex items-center justify-center text-2xl">
+          🔬
+        </div>
+        <p className="text-sm text-secondary font-medium">
+          Select an agent to inspect
+        </p>
+        <p className="text-xs text-text-faint text-center max-w-[220px] leading-relaxed">
+          Click any node in the pipeline to see its schema, description, and live trace
+        </p>
+      </div>
+    )
+  }
+
+  const state = agentStates?.[agent.id] || 'idle'
+  const meta  = agentMeta?.[agent.id] ?? null
+
+  const BADGE = {
+    idle:   { label: 'Idle',    bg: 'bg-bg',          color: 'var(--c-text-sec)', dot: 'var(--c-text-faint)' },
+    active: { label: 'Running', bg: 'bg-accent-bg',   color: 'var(--c-accent)',   dot: 'var(--c-accent)' },
+    done:   { label: 'Done',    bg: 'bg-success-bg',  color: 'var(--c-success)',  dot: 'var(--c-success)' },
+    error:  { label: 'Error',   bg: 'bg-danger-bg',   color: 'var(--c-danger)',   dot: 'var(--c-danger)' },
+  }[state]
+
+  return (
+    <div className="flex-1 flex flex-col bg-surface-2 overflow-hidden" style={{ borderTop: `3px solid ${agent.color}` }}>
+      {/* Inspector header */}
+      <div className="px-5 py-4 border-b border-border bg-surface flex-shrink-0">
+        {/* Agent identity row */}
+        <div className="flex items-center gap-3 mb-3">
+          <div
+            className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg border"
+            style={{ backgroundColor: agent.lightBg, borderColor: agent.color + '33', color: agent.color }}
+          >
+            {agent.icon}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-mono font-semibold" style={{ color: agent.color }}>
+                {agent.number}
+              </span>
+              <span className="text-sm font-semibold text-primary">
+                {agent.title}
+              </span>
+            </div>
+            <p className="text-xs text-secondary mt-0.5">
+              {agent.subtitle}
+            </p>
+          </div>
+
+          {/* State badge */}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${BADGE.bg}`}>
+            <div
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                background: BADGE.dot,
+                animation: state === 'active' ? 'pulse-dot 1.5s ease-in-out infinite' : 'none',
+              }}
+            />
+            <span className="text-[10px] font-semibold" style={{ color: BADGE.color }}>
+              {BADGE.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Inner tabs */}
+        <div className="flex gap-0.5 border-b border-border">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'trace', label: 'Live Trace' },
+          ].map(tab => {
+            const active = innerTab === tab.id
+            const showDot = tab.id === 'trace'
+            const dotStatus = state === 'error' ? 'err' : state === 'active' ? '…' : '✓'
+            const dotColor = state === 'error' ? 'text-danger bg-danger-bg' : state === 'active' ? 'text-accent bg-accent-bg' : 'text-success bg-success-bg'
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setInnerTab(tab.id)}
+                className={`
+                  px-4 py-2 text-xs font-medium rounded-t-lg transition-all
+                  ${active
+                    ? 'text-primary border-b-2'
+                    : 'text-secondary hover:text-primary border-b-2 border-transparent'}
+                `}
+                style={{
+                  borderColor: active ? agent.color : 'transparent',
+                  color: active ? 'var(--c-text)' : 'var(--c-text-sec)',
+                }}
+              >
+                {tab.label}
+                {showDot && (
+                  <span className={`ml-1.5 text-[8px] font-bold px-1.5 py-0.25 rounded-full ${dotColor}`}>
+                    {dotStatus}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5">
+        {innerTab === 'overview' && <OverviewTab agent={agent} />}
+        {innerTab === 'trace' && <TraceTab state={state} meta={meta} agent={agent} />}
+      </div>
+    </div>
+  )
 }

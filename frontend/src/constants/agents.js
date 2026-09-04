@@ -102,3 +102,10 @@ export const AGENTS = [
     },
   },
 ]
+
+export const STATS = [
+  { val: '1.0',  label: 'Faithfulness',    sub: 'RAGAS score' },
+  { val: '0.88', label: 'Answer Relevancy', sub: 'RAGAS score' },
+  { val: '2×',   label: 'Answer Accuracy',  sub: 'vs baseline' },
+  { val: '7',    label: 'Agents',           sub: 'in the pipeline' },
+]

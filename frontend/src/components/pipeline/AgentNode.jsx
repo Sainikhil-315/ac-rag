@@ -1,114 +1,73 @@
-// AgentNode — one node in the pipeline canvas
-// state: 'idle' | 'active' | 'done' | 'error'
-// selected: whether the inspector is open for this node
-
 export default function AgentNode({ agent, state = 'idle', selected, onClick, meta }) {
   const isIdle   = state === 'idle'
   const isActive = state === 'active'
   const isDone   = state === 'done'
   const isError  = state === 'error'
 
-  // Border + left accent colour per state
-  const stateStyle = {
-    idle:   { border: '1px solid var(--c-border)',        accent: 'transparent',       bg: 'var(--c-surface)'   },
-    active: { border: '1px solid var(--c-accent)',        accent: 'var(--c-accent)',   bg: 'var(--c-accent-bg)' },
-    done:   { border: '1px solid var(--c-success)',       accent: 'var(--c-success)',  bg: 'var(--c-success-bg)'},
-    error:  { border: '1px solid var(--c-danger)',        accent: 'var(--c-danger)',   bg: 'var(--c-danger-bg)' },
+  const stateConfig = {
+    idle:   { border: 'border-border', accent: 'accent-transparent', bg: 'bg-surface' },
+    active: { border: 'border-accent', accent: 'border-l-accent', bg: 'bg-accent-bg' },
+    done:   { border: 'border-success', accent: 'border-l-success', bg: 'bg-success-bg' },
+    error:  { border: 'border-danger', accent: 'border-l-danger', bg: 'bg-danger-bg' },
   }[state]
+
+  const nodeBorder = selected ? 'border-2' : stateConfig.border
+  const nodeColor  = selected ? agent.color : (state === 'active' ? 'var(--c-accent)' : state === 'done' ? 'var(--c-success)' : state === 'error' ? 'var(--c-danger)' : 'var(--c-border)')
 
   return (
     <div
       onClick={onClick}
+      className={`
+        relative rounded-lg px-3.5 py-3 cursor-pointer transition-all duration-200
+        flex items-center gap-3 overflow-hidden
+        ${stateConfig.bg} ${nodeBorder} ${stateConfig.accent}
+        ${selected ? 'ring-2' : 'hover:bg-surface'}
+      `}
       style={{
-        position: 'relative',
-        background: stateStyle.bg,
-        border: selected ? `1.5px solid ${agent.color}` : stateStyle.border,
-        borderRadius: '10px',
-        padding: '12px 14px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        boxShadow: selected
-          ? `0 0 0 3px ${agent.color}28`
-          : isActive
-          ? '0 2px 8px rgba(99,102,241,0.12)'
-          : '0 1px 2px rgba(0,0,0,0.04)',
-        transition: 'box-shadow 0.15s, border-color 0.15s',
-        overflow: 'hidden',
+        borderColor: nodeColor,
+        ...(selected ? { boxShadow: `0 0 0 3px ${agent.color}28` } : {}),
       }}
     >
-      {/* Left accent bar */}
-      <div style={{
-        position: 'absolute',
-        left: 0, top: 0, bottom: 0,
-        width: '3px',
-        background: stateStyle.accent,
-        borderRadius: '10px 0 0 10px',
-        transition: 'background 0.2s',
-      }} />
-
       {/* Icon */}
-      <div style={{
-        width: '34px', height: '34px', borderRadius: '8px',
-        background: isIdle ? 'var(--c-bg)' : agent.lightBg,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '16px', flexShrink: 0,
-        transition: 'background 0.2s',
-      }}>
+      <div
+        className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 border"
+        style={{
+          backgroundColor: agent.lightBg,
+          borderColor: agent.color + '33',
+          color: agent.color,
+        }}
+      >
         {isDone ? '✓' : isError ? '✗' : agent.icon}
       </div>
 
       {/* Text */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{
-            fontSize: '10px', fontFamily: 'monospace', fontWeight: 600,
-            color: isActive ? agent.color : isDone ? 'var(--c-success)' : 'var(--c-text-muted)',
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] font-mono font-semibold" style={{
+            color: isActive ? agent.color : isDone ? 'var(--c-success)' : 'var(--c-text-muted)'
           }}>
             {agent.number}
           </span>
-          <span style={{
-            fontSize: '13px', fontWeight: 600,
-            color: isIdle ? 'var(--c-text-2)' : isError ? 'var(--c-danger)' : 'var(--c-text)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
+          <span className={`text-sm font-semibold truncate transition-colors
+            ${isIdle ? 'text-text-2' : isError ? 'text-danger' : 'text-primary'}`}>
             {agent.title}
           </span>
         </div>
-        <div style={{
-          fontSize: '11px', color: 'var(--c-text-muted)', marginTop: '1px',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>
+        <div className="text-[10px] text-muted mt-0.5 truncate max-w-[180px]">
           {isDone && meta ? meta : agent.subtitle}
         </div>
       </div>
 
       {/* State indicator */}
-      <div style={{ flexShrink: 0 }}>
+      <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
         {isActive && (
-          <div style={{
-            width: '8px', height: '8px', borderRadius: '50%',
-            background: 'var(--c-accent)',
-            boxShadow: '0 0 0 3px rgba(99,102,241,0.2)',
-            animation: 'pulse-dot 1.5s ease-in-out infinite',
-          }} />
+          <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_0_3px_rgba(99,102,241,0.2)] animate-[pulse-dot_1.5s_ease-in-out_infinite]" />
         )}
         {isDone && (
-          <div style={{
-            width: '18px', height: '18px', borderRadius: '50%',
-            background: 'var(--c-success-bg)', border: '1px solid var(--c-success)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '10px', color: 'var(--c-success)', fontWeight: 700,
-          }}>✓</div>
+          <div className="w-4 h-4 rounded-full bg-success-bg border border-success flex items-center justify-center text-[9px] font-bold text-success">✓</div>
         )}
         {isError && (
-          <div style={{
-            width: '18px', height: '18px', borderRadius: '50%',
-            background: 'var(--c-danger-bg)', border: '1px solid var(--c-danger)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '10px', color: 'var(--c-danger)', fontWeight: 700,
-          }}>✗</div>
+          <div className="w-4 h-4 rounded-full bg-danger-bg border border-danger flex items-center justify-center text-[9px] font-bold text-danger">✗</div>
         )}
       </div>
     </div>
