@@ -124,10 +124,10 @@ def _evaluate_requirement_support(
         if sem_score >= score_threshold or combined >= 0.20:
             supporting_ids.append(doc_id)
 
-        if combined > best_score:
-            best_score = combined
+        if max(sem_score, combined) > best_score:
+            best_score = max(sem_score, combined)
 
-    if best_score >= max(0.20, score_threshold):
+    if best_score >= score_threshold:
         status = "SUPPORTED"
         reason = ""
     elif best_score >= (score_threshold * 0.5):
@@ -215,10 +215,10 @@ def validator_node(state: ACRagState) -> ACRagState:
             total_weight += weight
             weighted_score_sum += weight * score
 
-            if priority == "critical" and score < score_threshold:
+            if priority == "critical" and (status != "SUPPORTED" or score < score_threshold):
                 critical_passed = False
 
-            if status in ("MISSING", "PARTIAL") or score < score_threshold:
+            if status in ("MISSING", "PARTIAL", "CONTRADICTED") or score < score_threshold:
                 missing_req_ids.append(req["id"])
 
             updated_req = {
@@ -246,7 +246,9 @@ def validator_node(state: ACRagState) -> ACRagState:
         scored_docs = [{**d, "score": s} for d, s in zip(docs, raw_scores)]
         passing_doc_count = sum(1 for s in raw_scores if s >= score_threshold)
 
-        validation_passed = (total_coverage >= target_thresh or passing_doc_count >= min_passages) and (critical_passed or passing_doc_count >= min_passages)
+        # STRICT CRITICAL REQUIREMENT ENFORCEMENT:
+        # A CRITICAL requirement must NEVER pass just because overall similarity or passage count is high.
+        validation_passed = critical_passed and (total_coverage >= target_thresh or passing_doc_count >= min_passages)
 
         logger.info(
             "[EvidenceCoverageEngine] Coverage: %.2f (thresh: %.2f, passing_docs: %d/%d) | valid=%s",

@@ -279,3 +279,89 @@ def test_regression_issue4_repeated_failure_safe_termination():
     term_state = _end_max_retries_node(state)
     assert term_state["answer"] == _UNKNOWN_RESPONSE
     assert "Max retries exhausted" in term_state["error"]
+
+
+# ── Final 3 Fixes Regression Tests ───────────────────────────────────────────
+
+def test_critical_evidence_requirement_strictly_enforced():
+    """Fix 1: A CRITICAL requirement must NEVER pass just because overall passage count/similarity is high."""
+    state = initial_state("What is the chunk size and secret password?")
+    state["evidence_requirements"] = [
+        {
+            "id": "R1",
+            "requirement": "chunk size 512 tokens",
+            "priority": "critical",
+            "keywords": ["chunk", "size", "512"],
+        },
+        {
+            "id": "R2",
+            "requirement": "secret password parameter",
+            "priority": "critical",
+            "keywords": ["secret_password_xyz999"],
+        },
+    ]
+    # Doc satisfies R1 with high score, but R2 is completely absent
+    state["retrieved_docs"] = [
+        make_doc("The chunk size is configured to 512 tokens in settings.", "c1"),
+        make_doc("The system uses FAISS vector index with 512 token chunks.", "c2"),
+    ]
+
+    result = validator_node(state)
+    # R2 is missing → validation_passed MUST be False despite R1 high score and 2 docs
+    assert result["validation_passed"] is False
+    assert "R2" in result["missing_requirements"]
+
+
+def test_total_control_steps_semantics():
+    """Fix 2: Control-step semantics: initial retrieval starts at 0, adaptive actions increment."""
+    state = initial_state("Test query")
+    assert state["total_control_steps"] == 0
+
+    # Initial mandatory retrieval should keep total_control_steps = 0
+    from pipeline.nodes.retriever import _doc_to_dict
+    state["retrieved_docs"] = [make_doc("content", "c1")]
+    state["retrieval_attempts"] = 1
+    assert state["total_control_steps"] == 0
+
+    # Targeted retrieval increments total_control_steps
+    mock_vsm = MagicMock()
+    mock_doc = MagicMock()
+    mock_doc.page_content = "Targeted content"
+    mock_doc.metadata = {"chunk_id": "c2", "source": "s2"}
+    mock_vsm.bm25_search.return_value = [mock_doc]
+
+    targeted_node = make_targeted_retrieval_node(mock_vsm)
+    state["missing_requirements"] = ["R1"]
+    state["evidence_requirements"] = [{"id": "R1", "requirement": "Targeted content"}]
+
+    res = targeted_node(state)
+    assert res["total_control_steps"] == 1
+
+
+def test_bm25_metadata_field_search():
+    """Fix 3: BM25 metadata indexing enables searching by source file / section while preserving raw content."""
+    bm25 = BM25Retriever()
+    docs = [
+        {
+            "content": "CHUNK_OVERLAP = 64",
+            "metadata": {
+                "chunk_id": "c100",
+                "source": "config/settings.py",
+                "section_heading": "Ingestion Settings",
+                "modality": "text",
+                "page": 12,
+            },
+        }
+    ]
+    bm25.index_documents(docs)
+
+    # Search by metadata field: source file name
+    res_source = bm25.search("settings.py", top_k=1)
+    assert len(res_source) == 1
+    assert res_source[0]["content"] == "CHUNK_OVERLAP = 64"
+    assert res_source[0]["metadata"]["source"] == "config/settings.py"
+
+    # Search by metadata field: section heading
+    res_section = bm25.search("Ingestion Settings", top_k=1)
+    assert len(res_section) == 1
+    assert res_section[0]["metadata"]["chunk_id"] == "c100"

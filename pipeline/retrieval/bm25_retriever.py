@@ -72,7 +72,18 @@ class BM25Retriever:
             }
             self.documents.append(doc_dict)
 
-            tokens = default_tokenize(content)
+            # Include relevant metadata in BM25 indexed text so field/metadata queries match
+            meta_parts = []
+            if isinstance(metadata, dict):
+                for key in ("source", "section", "section_heading", "modality", "chunk_id", "file_name", "title"):
+                    val = metadata.get(key)
+                    if val:
+                        meta_parts.append(str(val))
+                if "page" in metadata and metadata["page"] is not None:
+                    meta_parts.append(f"page {metadata['page']}")
+
+            indexed_text = f"{content} {' '.join(meta_parts)}" if meta_parts else content
+            tokens = default_tokenize(indexed_text)
             self.doc_tokens.append(tokens)
             doc_len = len(tokens)
             self.doc_lens.append(doc_len)
