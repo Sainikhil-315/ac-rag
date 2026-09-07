@@ -211,6 +211,7 @@ class ACRagState(TypedDict):
     retrieval_attempts: int
     reflection_attempts: int
     repair_attempts: int
+    total_control_steps: int
     stage_logs: List[StageLogEntry]     # append-only trace for research analysis
     error: Optional[str]                # non-None triggers graceful pipeline exit
 
@@ -261,6 +262,7 @@ def initial_state(
         retrieval_attempts=0,
         reflection_attempts=0,
         repair_attempts=0,
+        total_control_steps=0,
         stage_logs=[],
         error=None,
         token_usage=None,

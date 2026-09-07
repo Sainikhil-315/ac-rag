@@ -82,8 +82,13 @@ def _increment_retry(state: ACRagState) -> ACRagState:
     Thin pass-through node placed between the critic/validator and any retry target.
     """
     new_count = state.get("retry_count", 0) + 1
-    logger.info("[Pipeline] Retry #%d", new_count)
-    return {**state, "retry_count": new_count}
+    new_control_steps = state.get("total_control_steps", 0) + 1
+    logger.info("[Pipeline] Retry #%d (total_control_steps=%d)", new_count, new_control_steps)
+    return {
+        **state,
+        "retry_count": new_count,
+        "total_control_steps": new_control_steps,
+    }
 
 
 # ── Terminal node stubs ────────────────────────────────────────────────────────
@@ -298,21 +303,36 @@ def build_pipeline(vsm: VectorStoreManager = None) -> StateGraph:
 
 
 def _route_after_retry_increment(state: ACRagState) -> str:
-    from config.settings import MAX_RETRIES
+    from config.settings import (
+        MAX_RETRIES,
+        MAX_RETRIEVAL_ROUNDS,
+        MAX_GENERATION_REPAIRS,
+        MAX_TOTAL_CONTROL_STEPS,
+    )
 
     retry = state.get("retry_count", 0)
-    if retry > MAX_RETRIES:
+    retrieval_attempts = state.get("retrieval_attempts", 0)
+    repair_attempts = state.get("repair_attempts", 0)
+    total_control_steps = state.get("total_control_steps", 0)
+
+    if retry > MAX_RETRIES or total_control_steps >= MAX_TOTAL_CONTROL_STEPS:
         return "end_max_retries"
 
     reason = state.get("retry_reason") or "content"
 
     if reason == "format":
+        if repair_attempts >= MAX_GENERATION_REPAIRS:
+            return "end_max_retries"
         return "generator"
 
     if reason in ("unsupported_claim", "coverage"):
+        if retrieval_attempts >= MAX_RETRIEVAL_ROUNDS:
+            return "end_max_retries"
         return "targeted_retrieval"
 
     if state.get("validation_passed") is False:
+        if retrieval_attempts >= MAX_RETRIEVAL_ROUNDS:
+            return "end_max_retries"
         return "retriever"
 
     return "query_analyzer"

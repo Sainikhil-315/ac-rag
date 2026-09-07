@@ -47,47 +47,85 @@ def _evaluate_requirement_support(
 ) -> Tuple[float, str, List[str], str]:
     """
     Evaluate support strength of candidate docs for a single evidence requirement.
+    Uses multi-signal evaluation:
+      1. Semantic similarity
+      2. Lexical / exact keyword & token match
+      3. Modality & metadata compatibility
+      4. Requirement type priority (numeric/config/table/figure)
+      5. Evidence quality & structured metadata
     """
     if not docs:
         return 0.0, "MISSING", [], "No documents retrieved"
 
     req_text = req.get("requirement") or query
-    expected_modality = req.get("expected_modality", "text")
-    keywords = [k.lower() for k in req.get("keywords", []) if k]
+    req_type = (req.get("requirement_type") or "fact").lower()
+    expected_modality = (req.get("expected_modality") or "text").lower()
+    keywords = [k.lower().strip() for k in req.get("keywords", []) if k.strip()]
 
     texts = [doc.get("content", "") for doc in docs]
     semantic_scores = score_passages_against_query(req_text, texts)
 
     best_score = 0.0
-    best_doc_id = None
     supporting_ids = []
 
     for idx, (doc, sem_score) in enumerate(zip(docs, semantic_scores)):
         doc_id = doc.get("chunk_id") or f"E{idx+1}"
-        content_lower = doc.get("content", "").lower()
-        doc_modality = doc.get("modality", "text")
+        content = doc.get("content", "")
+        content_lower = content.lower()
+        meta = doc.get("metadata") or {}
+        doc_modality = (doc.get("modality") or meta.get("modality") or "text").lower()
 
+        # 1. Lexical & exact match signal
         lexical_match = 0.0
         if keywords:
             matched_kws = sum(1 for kw in keywords if kw in content_lower)
             lexical_match = matched_kws / len(keywords)
 
-        modality_match = 1.0
-        if expected_modality not in ("all", None):
-            if doc_modality == expected_modality:
-                modality_match = 1.1
-            else:
-                modality_match = 0.8
+        # Exact token/number overlap signal for numeric/config/value requirements
+        import re
+        exact_value_boost = 0.0
+        req_numbers = set(re.findall(r'\b\d+(?:\.\d+)?\b', req_text))
+        if keywords:
+            for kw in keywords:
+                req_numbers.update(re.findall(r'\b\d+(?:\.\d+)?\b', kw))
 
-        combined = (0.7 * sem_score + 0.3 * lexical_match) * modality_match
+        if req_numbers:
+            content_numbers = set(re.findall(r'\b\d+(?:\.\d+)?\b', content))
+            if req_numbers.issubset(content_numbers):
+                exact_value_boost = 0.35
+
+        # 2. Modality & Requirement type scoring
+        if req_type in ("numeric", "value", "configuration", "code"):
+            # High weight on exact lexical & value overlap
+            combined = 0.35 * sem_score + 0.45 * lexical_match + 0.20 * exact_value_boost
+            if lexical_match == 1.0 and (exact_value_boost > 0 or not req_numbers):
+                combined = max(combined, 0.90)
+            elif lexical_match == 1.0:
+                combined = max(combined, 0.75)
+        elif req_type == "table" or expected_modality == "table":
+            if doc_modality == "table" or "table" in content_lower or "table" in meta:
+                combined = max(0.80, (0.5 * sem_score + 0.5 * lexical_match) * 1.3)
+            else:
+                combined = (0.5 * sem_score + 0.5 * lexical_match) * 0.7
+        elif req_type == "figure" or expected_modality == "figure":
+            if doc_modality == "figure" or "figure" in content_lower or "caption" in content_lower:
+                combined = max(0.80, (0.5 * sem_score + 0.5 * lexical_match) * 1.3)
+            else:
+                combined = (0.5 * sem_score + 0.5 * lexical_match) * 0.7
+        else:
+            combined = 0.6 * sem_score + 0.4 * lexical_match + exact_value_boost
+
+        # 3. Structured evidence bonus
+        if meta.get("section_heading") or meta.get("page") or meta.get("source"):
+            combined += 0.05
+
         combined = max(0.0, min(1.0, combined))
 
-        if sem_score >= score_threshold or combined >= 0.25:
+        if sem_score >= score_threshold or combined >= 0.20:
             supporting_ids.append(doc_id)
 
-        if sem_score > best_score or combined > best_score:
-            best_score = max(sem_score, combined)
-            best_doc_id = doc_id
+        if combined > best_score:
+            best_score = combined
 
     if best_score >= max(0.20, score_threshold):
         status = "SUPPORTED"
@@ -99,7 +137,7 @@ def _evaluate_requirement_support(
         status = "MISSING"
         reason = "No passage satisfied requirement with high confidence"
 
-    return best_score, status, supporting_ids, reason
+    return round(best_score, 4), status, supporting_ids, reason
 
 
 def validator_node(state: ACRagState) -> ACRagState:

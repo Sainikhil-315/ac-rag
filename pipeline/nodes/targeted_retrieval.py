@@ -132,6 +132,9 @@ def make_targeted_retrieval_node(vsm: VectorStoreManager):
         )
 
         merged_docs = existing_docs + new_docs
+        retrieval_attempts = state.get("retrieval_attempts", 0) + 1
+        total_control_steps = state.get("total_control_steps", 0) + 1
+        retry_count = state.get("retry_count", 0) + 1
 
         # Re-build EvidenceItem list
         merged_evidence = []
@@ -155,6 +158,8 @@ def make_targeted_retrieval_node(vsm: VectorStoreManager):
         log_entry["details"].update({
             "new_passages": len(new_docs),
             "total_passages": len(merged_docs),
+            "retrieval_attempts": retrieval_attempts,
+            "total_control_steps": total_control_steps,
         })
 
         return {
@@ -162,6 +167,9 @@ def make_targeted_retrieval_node(vsm: VectorStoreManager):
             "retrieved_docs": merged_docs,
             "retrieved_evidence": merged_evidence,
             "targeted_queries": (state.get("targeted_queries") or []) + targeted_queries,
+            "retrieval_attempts": retrieval_attempts,
+            "total_control_steps": total_control_steps,
+            "retry_count": retry_count,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 

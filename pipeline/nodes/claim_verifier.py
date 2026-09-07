@@ -152,22 +152,21 @@ def claim_verifier_node(state: ACRagState) -> ACRagState:
             "claim_verifications": verifications,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
-
-    except Exception as e:
-        logger.error("[ClaimVerifier] Verification failed: %s", e)
+    except Exception as exc:
+        logger.warning("[ClaimVerifier] Verification exception: %s. Using fail-safe UNSUPPORTED.", exc)
         log_entry["status"] = "failed"
-        log_entry["details"]["error"] = str(e)
+        log_entry["details"]["error"] = str(exc)
 
-        # Basic fallback: heuristic semantic check
+        # Fail-safe behavior: verification exception must NEVER assume claims are SUPPORTED
         fallback_verifications: List[ClaimVerification] = []
         for c in claims:
             fallback_verifications.append({
-                "claim_id": c.get("id", "C1"),
-                "status": "SUPPORTED",
-                "support_score": 0.8,
+                "claim_id": c.get("id", "C1") if isinstance(c, dict) else "C1",
+                "status": "UNSUPPORTED",
+                "support_score": 0.0,
                 "contradiction_score": 0.0,
                 "evidence_ids": [],
-                "reason": "Fallback pass due to LLM verification exception",
+                "reason": "Claim verification could not be established.",
             })
 
         return {
@@ -175,3 +174,4 @@ def claim_verifier_node(state: ACRagState) -> ACRagState:
             "claim_verifications": fallback_verifications,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
+

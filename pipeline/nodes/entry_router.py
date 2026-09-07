@@ -18,17 +18,14 @@ logger = logging.getLogger(__name__)
 
 def _similarity_route(vsm: VectorStoreManager, query: str) -> str:
     """
-    Quick k=3 similarity check against the vector store.
-    Returns "rag" if the query is relevant to indexed documents, "unknown" otherwise.
+    Quick similarity check against vector store + BM25/lexical pre-check.
+    Dense similarity acts as a ROUTING PRIOR, not definitive evidence sufficiency.
+    Queries with low embedding similarity but exact lexical match route to RAG.
     """
     try:
         results: List[Tuple] = vsm.similarity_search_with_score(query, k=3)
-        if not results:
-            logger.info("[EntryRouter] Similarity returned 0 results → unknown")
-            return "unknown"
-
-        avg_score = sum(score for _, score in results) / len(results)
-        top_score = results[0][1]
+        top_score = results[0][1] if results else 0.0
+        avg_score = (sum(score for _, score in results) / len(results)) if results else 0.0
 
         logger.info(
             "[EntryRouter] Similarity → top=%.3f avg=%.3f threshold=%.3f",
@@ -38,11 +35,40 @@ def _similarity_route(vsm: VectorStoreManager, query: str) -> str:
         if top_score >= ROUTER_SIMILARITY_THRESHOLD and avg_score >= (ROUTER_SIMILARITY_THRESHOLD * 0.7):
             return "rag"
 
+        # Dense similarity was low — check BM25/lexical signals before rejecting
+        bm25_results = vsm.bm25_search(query, k=1)
+        if bm25_results:
+            top_bm25_score = float(bm25_results[0].metadata.get("score", 0.0))
+            if top_bm25_score > 0.0:
+                logger.info(
+                    "[EntryRouter] Low dense score (%.3f), but BM25 matched with score %.3f → routing to RAG",
+                    top_score, top_bm25_score
+                )
+                return "rag"
+
+        # Check for exact token identifiers, uppercase constants, numbers, or factual intent words
+        import re
+        has_uppercase_identifier = bool(re.search(r'\b[A-Z0-9_]{3,}\b', query))
+        has_numeric = bool(re.search(r'\b\d+\b', query))
+        is_factual_intent = any(q_word in query.lower() for q_word in [
+            "what", "how", "where", "which", "when", "who", "define", "explain", "value", "config", "setting"
+        ])
+
+        if (has_uppercase_identifier or has_numeric or is_factual_intent) and not _is_chitchat(query):
+            logger.info("[EntryRouter] Factual/lexical query structure detected → routing to RAG")
+            return "rag"
+
         return "unknown"
 
     except Exception as e:
         logger.warning("[EntryRouter] Similarity check failed (%s) → defaulting to rag", e)
         return "rag"
+
+
+def _is_chitchat(query: str) -> bool:
+    clean_q = query.lower().strip("?!. ")
+    chitchat_phrases = {"hi", "hello", "hey", "who are you", "what is your name", "how are you", "good morning", "good evening"}
+    return clean_q in chitchat_phrases
 
 
 def make_entry_router_node(vsm: VectorStoreManager):

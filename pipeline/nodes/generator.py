@@ -106,14 +106,16 @@ def generator_node(state: ACRagState) -> ACRagState:
     Writes: state["answer"], state["answer_with_attribution"], state["is_answerable"]
     """
     query = state["query"]
-    # NOTE: use `or ""`, not a .get() default — initial_state() sets refined_context=None
-    # explicitly, so the key always exists and .get(key, "") would return None anyway.
     context = state.get("refined_context") or ""
+
+    is_repair = state.get("answer") is not None
+    repair_attempts = state.get("repair_attempts", 0) + (1 if is_repair else 0)
+    total_control_steps = state.get("total_control_steps", 0) + (1 if is_repair else 0)
 
     log_entry: Dict[str, Any] = {
         "stage": "generator",
         "status": "started",
-        "details": {"query": query, "context_chars": len(context)},
+        "details": {"query": query, "context_chars": len(context), "is_repair": is_repair},
     }
 
     if not context:
@@ -125,6 +127,8 @@ def generator_node(state: ACRagState) -> ACRagState:
             "answer": "The provided documents do not contain sufficient evidence to answer this question.",
             "answer_with_attribution": [],
             "is_answerable": False,
+            "repair_attempts": repair_attempts,
+            "total_control_steps": total_control_steps,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 
@@ -163,6 +167,8 @@ def generator_node(state: ACRagState) -> ACRagState:
             "answer": clean_answer,
             "answer_with_attribution": attribution,
             "is_answerable": result.is_answerable,
+            "repair_attempts": repair_attempts,
+            "total_control_steps": total_control_steps,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 
