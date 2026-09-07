@@ -241,6 +241,107 @@ class VectorStoreManager:
             search_type=search_type, search_kwargs=search_kwargs
         )
 
+    def get_all_documents(self) -> List[Document]:
+        """
+        Extract all documents/chunks stored in the vector store.
+        Used to build independent BM25 index.
+        """
+        self._assert_built()
+        if self._backend == "faiss":
+            if hasattr(self._store, "docstore") and hasattr(self._store.docstore, "_dict"):
+                return list(self._store.docstore._dict.values())
+        elif self._backend == "chroma":
+            if hasattr(self._store, "_collection"):
+                res = self._store._collection.get()
+                docs = []
+                for text, meta in zip(res.get("documents", []), res.get("metadatas", [])):
+                    docs.append(Document(page_content=text, metadata=meta or {}))
+                return docs
+        # Fallback using similarity search with dummy string if direct store inspection is unsupported
+        try:
+            return self._store.similarity_search("", k=10000)
+        except Exception:
+            return []
+
+    def get_bm25_retriever(self):
+        """
+        Get or initialize the independent BM25Retriever for lexical search.
+        """
+        if not hasattr(self, "_bm25_retriever") or self._bm25_retriever is None:
+            from pipeline.retrieval.bm25_retriever import BM25Retriever
+            docs = self.get_all_documents()
+            bm25 = BM25Retriever()
+            bm25.index_documents(docs)
+            self._bm25_retriever = bm25
+        return self._bm25_retriever
+
+    def bm25_search(
+        self,
+        query: str,
+        k: int = RETRIEVAL_K_DEFAULT,
+        modality_filter: Optional[str] = None,
+    ) -> List[Document]:
+        """
+        Lexical search using BM25.
+        Returns list of Document objects with 'score' in metadata.
+        """
+        bm25 = self.get_bm25_retriever()
+        raw_results = bm25.search(query=query, top_k=k, modality_filter=modality_filter)
+        docs = []
+        for r in raw_results:
+            meta = dict(r.get("metadata", {}))
+            meta["score"] = r.get("score", 0.0)
+            meta["retrieval_method"] = "bm25"
+            docs.append(Document(page_content=r["content"], metadata=meta))
+        return docs
+
+    def hybrid_search(
+        self,
+        query: str,
+        k: int = RETRIEVAL_K_DEFAULT,
+        fetch_k: Optional[int] = None,
+        lambda_mult: float = MMR_LAMBDA_MULT,
+        modality_filter: Optional[str] = None,
+        dense_weight: float = 0.5,
+        bm25_weight: float = 0.5,
+    ) -> List[Document]:
+        """
+        Hybrid dense (FAISS MMR) + lexical (BM25) search.
+        """
+        from pipeline.retrieval.hybrid import hybrid_fuse_results
+
+        # Dense candidates
+        dense_docs = self.mmr_search(query, k=k, fetch_k=fetch_k, lambda_mult=lambda_mult)
+        dense_dicts = [
+            {
+                "content": d.page_content,
+                "metadata": d.metadata,
+                "score": float(d.metadata.get("score", 0.8)),
+            }
+            for d in dense_docs
+        ]
+
+        # BM25 candidates
+        bm25_ret = self.get_bm25_retriever()
+        bm25_dicts = bm25_ret.search(query, top_k=k, modality_filter=modality_filter)
+
+        fused = hybrid_fuse_results(
+            dense_results=dense_dicts,
+            bm25_results=bm25_dicts,
+            top_k=k,
+            dense_weight=dense_weight,
+            bm25_weight=bm25_weight,
+        )
+
+        final_docs = []
+        for item in fused:
+            meta = dict(item.get("metadata", {}))
+            meta["score"] = item.get("score", 0.0)
+            meta["retrieval_method"] = item.get("retrieval_method", "hybrid")
+            final_docs.append(Document(page_content=item["content"], metadata=meta))
+
+        return final_docs
+
     # ── Internal ──────────────────────────────────────────────────────────────
 
     def _assert_built(self) -> None:
@@ -252,3 +353,4 @@ class VectorStoreManager:
     @property
     def is_ready(self) -> bool:
         return self._store is not None
+

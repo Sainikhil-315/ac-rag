@@ -190,17 +190,37 @@ def _build_context_string(docs: List[Dict[str, Any]]) -> str:
 def context_refiner_node(state: ACRagState) -> ACRagState:
     """
     LangGraph node: Context Refiner (full implementation).
-    Reads:  state["query"], state["scored_docs"]
+    Reads:  state["query"], state["scored_docs"], state["retrieved_evidence"]
     Writes: state["refined_context"]
     """
     query = state["query"]
     docs = state.get("scored_docs") or []
+    if not docs and state.get("retrieved_evidence"):
+        # Map EvidenceItem objects back to doc dict format
+        docs = [
+            {
+                "content": e["content"],
+                "metadata": {
+                    "source": e["source"],
+                    "page": e.get("page"),
+                    "section_heading": e.get("section", "Unknown"),
+                    "chunk_id": e.get("chunk_id", "unknown"),
+                    "modality": e.get("modality", "text"),
+                },
+                "chunk_id": e.get("chunk_id", "unknown"),
+                "score": e.get("rerank_score", 0.8),
+                "section_heading": e.get("section", "Unknown"),
+                "modality": e.get("modality", "text"),
+            }
+            for e in state["retrieved_evidence"]
+        ]
 
     log_entry: Dict[str, Any] = {
         "stage": "context_refiner",
         "status": "started",
         "details": {"docs_in": len(docs)},
     }
+
 
     if not docs:
         logger.warning("[ContextRefiner] No scored docs to refine.")

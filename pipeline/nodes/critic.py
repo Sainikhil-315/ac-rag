@@ -22,7 +22,7 @@ Ablation:
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
@@ -180,22 +180,105 @@ def _compute_overall(eval_result: CriticEvaluation) -> float:
 
 # ── Node function ─────────────────────────────────────────────────────────────
 
+# ── Evidence-Derived Confidence Calculator ───────────────────────────────────
+
+def _compute_evidence_confidence(
+    state: ACRagState,
+    overall_critic: float = 4.0,
+) -> Tuple[float, Dict[str, Any]]:
+    """
+    Calculate measurable evidence-derived confidence score:
+    confidence = w1 * coverage + w2 * claim_support + w3 * evidence_quality - w4 * contradiction_penalty
+    """
+    from config.settings import (
+        CONFIDENCE_W_COVERAGE,
+        CONFIDENCE_W_CLAIM_SUPPORT,
+        CONFIDENCE_W_EVIDENCE_QUALITY,
+        CONFIDENCE_W_CONTRADICTION_PENALTY,
+    )
+
+    reqs = state.get("evidence_requirements") or []
+    coverage_list = state.get("evidence_coverage") or []
+    verifications = state.get("claim_verifications") or []
+    contradictions = state.get("contradictions") or []
+
+    # 1. Requirement coverage score
+    if coverage_list:
+        coverage_score = sum(c.get("score", 0.0) for c in coverage_list) / len(coverage_list)
+    else:
+        coverage_score = 0.5
+
+    # 2. Claim support ratio
+    if verifications:
+        supported = sum(1 for v in verifications if v.get("status") in ("SUPPORTED", "PARTIALLY_SUPPORTED"))
+        claim_support_ratio = supported / len(verifications)
+    else:
+        claim_support_ratio = 0.8 if state.get("answer") else 0.0
+
+    # 3. Evidence quality / critic score
+    evidence_quality = max(0.0, min(1.0, overall_critic / 5.0))
+
+    # 4. Contradiction penalty
+    contradiction_ratio = min(1.0, len(contradictions) * 0.5)
+
+    confidence = (
+        CONFIDENCE_W_COVERAGE * coverage_score
+        + CONFIDENCE_W_CLAIM_SUPPORT * claim_support_ratio
+        + CONFIDENCE_W_EVIDENCE_QUALITY * evidence_quality
+        - CONFIDENCE_W_CONTRADICTION_PENALTY * contradiction_ratio
+    )
+    confidence = round(max(0.0, min(1.0, confidence)), 4)
+
+    breakdown = {
+        "coverage_score": round(coverage_score, 4),
+        "claim_support_ratio": round(claim_support_ratio, 4),
+        "evidence_quality": round(evidence_quality, 4),
+        "contradiction_ratio": round(contradiction_ratio, 4),
+        "final_confidence": confidence,
+    }
+
+    return confidence, breakdown
+
+
+def _build_evidence_trace(state: ACRagState, confidence_summary: Dict[str, Any]) -> Dict[str, Any]:
+    """Build serializable evidence trace graph."""
+    return {
+        "requirements": list(state.get("evidence_requirements") or []),
+        "evidence_items": list(state.get("retrieved_evidence") or []),
+        "claims": list(state.get("claims") or []),
+        "verifications": list(state.get("claim_verifications") or []),
+        "contradictions": list(state.get("contradictions") or []),
+        "confidence_summary": confidence_summary,
+    }
+
+
+# ── Node function ─────────────────────────────────────────────────────────────
+
 def critic_node(state: ACRagState) -> ACRagState:
     """
-    LangGraph node: Critic (full implementation).
-    Reads:  state["query"], state["refined_context"], state["answer"]
+    LangGraph node: Critic & Verification Control Node.
+    Reads:  state["query"], state["refined_context"], state["answer"], state["claims"],
+            state["claim_verifications"], state["evidence_coverage"], state["contradictions"]
     Writes: state["critic_scores"], state["critic_passed"], state["critic_feedback"],
-            state["retry_reason"]
+            state["retry_reason"], state["evidence_confidence"], state["evidence_trace"],
+            state["abstained"]
     """
     query = state["query"]
     context = state.get("refined_context", "")
     answer = state.get("answer", "")
+    verifications = state.get("claim_verifications") or []
+    contradictions = state.get("contradictions") or []
 
     log_entry: Dict[str, Any] = {
         "stage": "critic",
         "status": "started",
         "details": {"query": query},
     }
+
+    # Check for unsupported claims or contradictions
+    unsupported_claims = [v for v in verifications if v.get("status") in ("UNSUPPORTED", "CONTRADICTED")]
+    has_unsupported = len(unsupported_claims) > 0
+    has_contradictions = len(contradictions) > 0
 
     # ── Ablation bypass ───────────────────────────────────────────────────────
     if not USE_CRITIC:
@@ -205,38 +288,36 @@ def critic_node(state: ACRagState) -> ACRagState:
             figure_accuracy=5, conciseness=5, overall=5.0,
             feedback="Critic disabled (ablation mode).",
         )
+        conf, conf_summary = _compute_evidence_confidence(state, overall_critic=5.0)
+        trace = _build_evidence_trace(state, conf_summary)
         log_entry["status"] = "completed"
-        log_entry["details"].update({"ablation_skip": True, "passed": True})
         return {
             **state,
             "critic_scores": scores,
             "critic_passed": True,
             "critic_feedback": scores["feedback"],
+            "evidence_confidence": conf,
+            "evidence_trace": trace,
+            "abstained": False,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 
-    if not answer:
-        logger.warning("[Critic] No answer to evaluate.")
-        log_entry["status"] = "completed"
-        log_entry["details"]["passed"] = False
-        scores = CriticScores(
-            faithfulness=1, completeness=1, table_accuracy=5,
-            figure_accuracy=5, conciseness=5, overall=2.4,
-            feedback="No answer was generated.",
-        )
+    if not answer or answer.strip().startswith("The provided documents do not contain"):
+        logger.info("[Critic] Insufficient evidence response or empty answer — marking abstained.")
+        conf, conf_summary = _compute_evidence_confidence(state, overall_critic=1.0)
+        trace = _build_evidence_trace(state, conf_summary)
         return {
             **state,
-            "critic_scores": scores,
-            "critic_passed": False,
-            "critic_feedback": "No answer was generated.",
-            "retry_reason": "content",
+            "critic_passed": True,
+            "critic_feedback": "Abstained due to insufficient evidence.",
+            "evidence_confidence": conf,
+            "evidence_trace": trace,
+            "abstained": True,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 
     try:
         chain = _prompt | get_llm().with_structured_output(CriticEvaluation)
-
-        # Truncate context to avoid exceeding context window in critic call
         context_preview = context[:8000] if len(context) > 8000 else context
 
         eval_result: CriticEvaluation = chain.invoke({
@@ -245,26 +326,28 @@ def critic_node(state: ACRagState) -> ACRagState:
             "answer": answer,
         })
 
-        passed = _all_pass(eval_result)
+        passed = _all_pass(eval_result) and not has_unsupported and not has_contradictions
         overall = _compute_overall(eval_result)
 
-        logger.info(
-            "[Critic] faith=%d complete=%d table=%d figure=%d concise=%d | overall=%.1f | passed=%s",
-            eval_result.faithfulness,
-            eval_result.completeness,
-            eval_result.table_accuracy,
-            eval_result.figure_accuracy,
-            eval_result.conciseness,
-            overall,
-            passed,
-        )
+        # Compute evidence-derived confidence
+        confidence, conf_summary = _compute_evidence_confidence(state, overall_critic=overall)
+        trace = _build_evidence_trace(state, conf_summary)
 
+        # Decide retry reason
         if not passed:
-            logger.info(
-                "[Critic] Answer rejected. retry_reason=%s | feedback: %s",
-                eval_result.retry_reason,
-                eval_result.feedback[:200],
-            )
+            if has_unsupported:
+                retry_reason = "unsupported_claim"
+            elif has_contradictions:
+                retry_reason = "contradiction"
+            else:
+                retry_reason = _sanitize_retry_reason(eval_result.retry_reason)
+        else:
+            retry_reason = None
+
+        logger.info(
+            "[Critic] faith=%d complete=%d | overall=%.1f | confidence=%.2f | passed=%s | retry_reason=%s",
+            eval_result.faithfulness, eval_result.completeness, overall, confidence, passed, retry_reason
+        )
 
         scores = CriticScores(
             faithfulness=eval_result.faithfulness,
@@ -276,14 +359,11 @@ def critic_node(state: ACRagState) -> ACRagState:
             feedback=eval_result.feedback,
         )
 
-        # Sanitise retry_reason — guards against garbage LLM output like "}", "><|python_tag|>"
-        clean_reason = _sanitize_retry_reason(eval_result.retry_reason) if not passed else "none"
-
         log_entry["status"] = "completed"
         log_entry["details"].update({
-            "scores": {k: v for k, v in scores.items() if k != "feedback"},
             "passed": passed,
-            "retry_reason": clean_reason,
+            "confidence": confidence,
+            "retry_reason": retry_reason,
         })
 
         return {
@@ -291,7 +371,10 @@ def critic_node(state: ACRagState) -> ACRagState:
             "critic_scores": scores,
             "critic_passed": passed,
             "critic_feedback": eval_result.feedback,
-            "retry_reason": clean_reason if not passed else None,
+            "retry_reason": retry_reason,
+            "evidence_confidence": confidence,
+            "evidence_trace": trace,
+            "abstained": False,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 
@@ -299,11 +382,16 @@ def critic_node(state: ACRagState) -> ACRagState:
         logger.error("[Critic] Evaluation failed: %s", e)
         log_entry["status"] = "failed"
         log_entry["details"]["error"] = str(e)
-        # On critic failure, fail the answer so the router can retry
+        conf, conf_summary = _compute_evidence_confidence(state, overall_critic=3.0)
+        trace = _build_evidence_trace(state, conf_summary)
         return {
             **state,
             "critic_passed": False,
             "retry_reason": "content",
             "critic_feedback": f"Critic evaluation failed: {e}",
+            "evidence_confidence": conf,
+            "evidence_trace": trace,
+            "abstained": False,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
+

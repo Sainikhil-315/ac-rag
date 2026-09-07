@@ -38,11 +38,22 @@ logger = logging.getLogger(__name__)
 
 # ── Rule-based planner (always runs) ─────────────────────────────────────────
 
-def _rule_based_plan(complexity: float, intent: str) -> RetrievalPlan:
+def _rule_based_plan(complexity: float, intent: str, requirements=None) -> RetrievalPlan:
     """
     Deterministic plan based on complexity score thresholds.
     Used as the default and as the fallback if LLM planner fails.
     """
+    strategy = "hybrid"
+    lexical_weight = 0.5
+    dense_weight = 0.5
+
+    if requirements:
+        req_types = [r.get("requirement_type") for r in requirements if isinstance(r, dict)]
+        if any(t in ("numeric", "value", "procedure") for t in req_types):
+            strategy = "hybrid"
+            lexical_weight = 0.6
+            dense_weight = 0.4
+
     if complexity < 0.4:
         k = RETRIEVAL_K_MIN          # 4 — simple query, few passages needed
         depth = "shallow"
@@ -70,25 +81,23 @@ def _rule_based_plan(complexity: float, intent: str) -> RetrievalPlan:
         k=k,
         fetch_k=k * MMR_FETCH_K_MULTIPLIER,
         lambda_mult=lambda_mult,
-        modality_filter="all",          # LLM refiner may override this
+        modality_filter="all",
         use_multi_query=multi_query,
         retrieval_depth=depth,
+        strategy=strategy,
+        lexical_weight=lexical_weight,
+        dense_weight=dense_weight,
     )
 
 
 # ── Modality guard ────────────────────────────────────────────────────────────
 
-# Only accept a specific modality when the query explicitly mentions it.
-# Without this guard, the LLM planner tends to over-specify "table" or "figure"
-# for general queries — which limits retrieval to a narrow slice of chunks and
-# causes important text passages to be missed.
 _TABLE_KEYWORDS  = frozenset(["table", "chart", "statistics", "statistic", "percentage"])
 _FIGURE_KEYWORDS = frozenset(["figure", "image", "diagram", "plot", "graph", "visual", "picture"])
 
 def _sanitize_modality(query: str, modality: str) -> str:
     """
     Return 'all' unless the query explicitly mentions a modality keyword.
-    Prevents the LLM planner from choosing 'figure'/'table' for generic questions.
     """
     if modality in ("all", "text"):
         return modality
@@ -108,6 +117,10 @@ class PlanRefinement(BaseModel):
     modality_filter: str = Field(
         description="Which modality to retrieve: 'text', 'table', 'figure', or 'all'"
     )
+    strategy: str = Field(
+        default="hybrid",
+        description="Search strategy: 'hybrid', 'dense', or 'bm25'"
+    )
     k_override: int = Field(
         ge=4, le=12,
         description="Override k value if the default is clearly wrong for this query"
@@ -123,7 +136,8 @@ Given a query, its intent, and a rule-based retrieval plan, refine the plan.
 Your job is limited to:
 1. Setting modality_filter: if the query asks about a table/chart/figure explicitly,
    set modality to "table" or "figure". Otherwise keep "all".
-2. Optionally adjusting k if the rule-based value is clearly wrong.
+2. Setting search strategy: "hybrid", "bm25", or "dense".
+3. Optionally adjusting k if the rule-based value is clearly wrong.
 
 Do NOT change fetch_k, lambda_mult, or use_multi_query — those are set by rules."""
 
@@ -155,8 +169,8 @@ def _llm_refine_plan(plan: RetrievalPlan, state: ACRagState) -> RetrievalPlan:
         })
 
         logger.info(
-            "[RetrievalPlanner] LLM refinement → modality=%s, k=%d (%s)",
-            refinement.modality_filter, refinement.k_override, refinement.override_reason
+            "[RetrievalPlanner] LLM refinement → modality=%s, strategy=%s, k=%d (%s)",
+            refinement.modality_filter, refinement.strategy, refinement.k_override, refinement.override_reason
         )
 
         raw_modality = _sanitize_modality(
@@ -164,6 +178,7 @@ def _llm_refine_plan(plan: RetrievalPlan, state: ACRagState) -> RetrievalPlan:
             refinement.modality_filter,
         )
         plan["modality_filter"] = raw_modality
+        plan["strategy"] = refinement.strategy
         plan["k"] = refinement.k_override
         plan["fetch_k"] = refinement.k_override * MMR_FETCH_K_MULTIPLIER
 
@@ -178,11 +193,12 @@ def _llm_refine_plan(plan: RetrievalPlan, state: ACRagState) -> RetrievalPlan:
 def retrieval_planner_node(state: ACRagState) -> ACRagState:
     """
     LangGraph node: Retrieval Planner.
-    Reads:  state["complexity_score"], state["intent"], state["query"]
+    Reads:  state["complexity_score"], state["intent"], state["query"], state["evidence_requirements"]
     Writes: state["retrieval_plan"]
     """
     complexity = state.get("complexity_score") or 0.5
     intent = state.get("intent") or "factual"
+    reqs = state.get("evidence_requirements")
 
     log_entry = {
         "stage": "retrieval_planner",
@@ -192,7 +208,7 @@ def retrieval_planner_node(state: ACRagState) -> ACRagState:
     logger.info("[RetrievalPlanner] Planning retrieval (complexity=%.2f, intent=%s)", complexity, intent)
 
     # Step 1: Rule-based plan (always)
-    plan = _rule_based_plan(complexity, intent)
+    plan = _rule_based_plan(complexity, intent, requirements=reqs)
 
     # Step 2: LLM refinement (if enabled)
     if USE_RETRIEVAL_PLANNER:
@@ -201,8 +217,8 @@ def retrieval_planner_node(state: ACRagState) -> ACRagState:
         logger.info("[RetrievalPlanner] Ablation: LLM planner disabled, using rule-based defaults")
 
     logger.info(
-        "[RetrievalPlanner] Final plan → k=%d, modality=%s, multi_query=%s, depth=%s",
-        plan["k"], plan["modality_filter"], plan["use_multi_query"], plan["retrieval_depth"]
+        "[RetrievalPlanner] Final plan → k=%d, strategy=%s, modality=%s, multi_query=%s, depth=%s",
+        plan["k"], plan.get("strategy", "hybrid"), plan["modality_filter"], plan["use_multi_query"], plan["retrieval_depth"]
     )
 
     log_entry["status"] = "completed"
@@ -213,3 +229,4 @@ def retrieval_planner_node(state: ACRagState) -> ACRagState:
         "retrieval_plan": plan,
         "stage_logs": state["stage_logs"] + [log_entry],
     }
+

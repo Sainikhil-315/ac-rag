@@ -134,5 +134,53 @@ USE_VALIDATOR         = True      # re-enabled after threshold calibration check
 USE_CONTEXT_REFINER   = True
 USE_CRITIC            = True
 
+# ── Evidence-Driven Adaptive RAG Settings ──────────────────────────────────────
+# BM25 / Lexical Retrieval
+BM25_ENABLED = True
+BM25_K1 = 1.5
+BM25_B = 0.75
+
+# Hybrid Fusion
+HYBRID_FUSION_METHOD = "rrf"      # "rrf" | "linear"
+HYBRID_DENSE_WEIGHT  = 0.5
+HYBRID_BM25_WEIGHT   = 0.5
+RRF_K                = 60
+
+# Evidence Requirement Planning & Coverage
+REQUIREMENT_MAX_COUNT        = 6
+COVERAGE_THRESHOLD           = 0.60
+CRITICAL_COVERAGE_THRESHOLD  = 0.80
+MIN_COVERAGE_IMPROVEMENT     = 0.10
+
+# Claim Verification & Contradiction Detection
+CLAIM_SUPPORT_THRESHOLD  = 0.70
+CONTRADICTION_THRESHOLD  = 0.50
+
+# Control & Budget Limits
+MAX_RETRIEVAL_ROUNDS     = 3
+MAX_GENERATION_REPAIRS   = 2
+MAX_TOTAL_CONTROL_STEPS  = 8
+
+# Abstention & Confidence
+ABSTENTION_ENABLED       = True
+
+# Confidence weights: w1 * coverage + w2 * claim_support + w3 * evidence_quality - w4 * contradiction
+CONFIDENCE_W_COVERAGE               = 0.40
+CONFIDENCE_W_CLAIM_SUPPORT          = 0.40
+CONFIDENCE_W_EVIDENCE_QUALITY       = 0.20
+CONFIDENCE_W_CONTRADICTION_PENALTY  = 0.30
+
+# New System Ablation Flags
+USE_EVIDENCE_PLANNER         = True
+USE_BM25                     = True
+USE_HYBRID_RETRIEVAL         = True
+USE_EVIDENCE_COVERAGE        = True
+USE_TARGETED_RETRIEVAL       = True
+USE_CLAIM_VERIFICATION       = True
+USE_CONTRADICTION_DETECTION  = True
+USE_ABSTENTION               = True
+USE_EVIDENCE_CONFIDENCE      = True
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 LOG_LEVEL = "INFO"    # "DEBUG" for verbose stage traces
+

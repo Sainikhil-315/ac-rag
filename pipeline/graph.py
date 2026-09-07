@@ -45,8 +45,12 @@ from pipeline.state import ACRagState, initial_state
 from pipeline.nodes.query_analyzer import query_analyzer_node
 from pipeline.nodes.retrieval_planner import retrieval_planner_node
 from pipeline.nodes.validator import validator_node
+from pipeline.nodes.targeted_retrieval import make_targeted_retrieval_node
 from pipeline.nodes.context_refiner import context_refiner_node
 from pipeline.nodes.generator import generator_node
+from pipeline.nodes.claim_extractor import claim_extractor_node
+from pipeline.nodes.claim_verifier import claim_verifier_node
+from pipeline.nodes.contradiction_detector import contradiction_detector_node
 from pipeline.nodes.critic import critic_node
 from pipeline.router import (
     route_after_entry_router,
@@ -54,8 +58,12 @@ from pipeline.router import (
     route_after_retrieval_planner,
     route_after_retriever,
     route_after_validator,
+    route_after_targeted_retrieval,
     route_after_context_refiner,
     route_after_generator,
+    route_after_claim_extractor,
+    route_after_claim_verifier,
+    route_after_contradiction_detector,
     route_after_critic,
     route_after_max_retries,
 )
@@ -72,8 +80,6 @@ logger = logging.getLogger(__name__)
 def _increment_retry(state: ACRagState) -> ACRagState:
     """
     Thin pass-through node placed between the critic/validator and any retry target.
-    Increments retry_count so the router can enforce MAX_RETRIES.
-    Not a real processing node — purely a counter.
     """
     new_count = state.get("retry_count", 0) + 1
     logger.info("[Pipeline] Retry #%d", new_count)
@@ -95,18 +101,6 @@ def _end_error_node(state: ACRagState) -> ACRagState:
 def _end_max_retries_node(state: ACRagState) -> ACRagState:
     logger.warning("[Pipeline] ✗ Pipeline terminated: max retries (%d) exhausted", state.get("retry_count", 0))
 
-    # Bug fixed 2026-08-20 (real report): a query about content genuinely absent from
-    # the document went through the full RAG path (Entry Router's coarse similarity
-    # check passed it through as "rag"), then the Validator correctly kept rejecting
-    # every retrieval attempt as irrelevant — but the pipeline never got as far as
-    # generating anything, so it hard-failed with "Max retries exhausted" and NO
-    # answer at all, instead of the same graceful "I don't know" the Entry Router's
-    # "unknown" route gives for the exact same underlying situation (content not in
-    # the document) when it catches it earlier. Functionally these are the same
-    # outcome discovered at two different pipeline stages — they should look the same
-    # to the user. Only applies when nothing was ever generated (validator-exhausted
-    # case); if the critic rejected an actually-generated answer, that answer is kept
-    # as the best-effort result rather than replaced.
     if not state.get("answer"):
         from pipeline.nodes.direct_responder import _UNKNOWN_RESPONSE
         return {
@@ -125,15 +119,8 @@ def _end_max_retries_node(state: ACRagState) -> ACRagState:
 
 def build_pipeline(vsm: VectorStoreManager = None) -> StateGraph:
     """
-    Build and compile the full AC-RAG LangGraph pipeline.
-
-    Args:
-        vsm: A loaded VectorStoreManager. If None, creates and loads one automatically.
-
-    Returns:
-        A compiled LangGraph CompiledGraph ready for .invoke() calls.
+    Build and compile the full Evidence-Driven Adaptive AC-RAG LangGraph pipeline.
     """
-    # Load vector store if not provided
     if vsm is None:
         logger.info("[Pipeline] Loading vector store...")
         vsm = VectorStoreManager()
@@ -141,35 +128,39 @@ def build_pipeline(vsm: VectorStoreManager = None) -> StateGraph:
 
     retriever_node = make_retriever_node(vsm)
     entry_router_node = make_entry_router_node(vsm)
+    targeted_retrieval_node = make_targeted_retrieval_node(vsm)
 
     # ── Define graph ──────────────────────────────────────────────────────────
     graph = StateGraph(ACRagState)
 
     # Entry routing nodes
     graph.add_node("entry_router",     entry_router_node)
-    graph.add_node("direct_responder", direct_responder_node)   # handles "unknown" queries
+    graph.add_node("direct_responder", direct_responder_node)
 
     # RAG pipeline nodes
-    graph.add_node("query_analyzer",    query_analyzer_node)
-    graph.add_node("retrieval_planner", retrieval_planner_node)
-    graph.add_node("retriever",         retriever_node)
-    graph.add_node("validator",         validator_node)
-    graph.add_node("context_refiner",   context_refiner_node)
-    graph.add_node("generator",         generator_node)
-    graph.add_node("critic",            critic_node)
-    graph.add_node("increment_retry",   _increment_retry)
+    graph.add_node("query_analyzer",         query_analyzer_node)
+    graph.add_node("retrieval_planner",      retrieval_planner_node)
+    graph.add_node("retriever",              retriever_node)
+    graph.add_node("validator",              validator_node)
+    graph.add_node("targeted_retrieval",    targeted_retrieval_node)
+    graph.add_node("context_refiner",        context_refiner_node)
+    graph.add_node("generator",              generator_node)
+    graph.add_node("claim_extractor",        claim_extractor_node)
+    graph.add_node("claim_verifier",         claim_verifier_node)
+    graph.add_node("contradiction_detector", contradiction_detector_node)
+    graph.add_node("critic",                 critic_node)
+    graph.add_node("increment_retry",        _increment_retry)
 
     # Terminal nodes
-    graph.add_node("end_success",       _end_success_node)
-    graph.add_node("end_error",         _end_error_node)
-    graph.add_node("end_max_retries",   _end_max_retries_node)
+    graph.add_node("end_success",            _end_success_node)
+    graph.add_node("end_error",              _end_error_node)
+    graph.add_node("end_max_retries",        _end_max_retries_node)
 
     # ── Entry point ───────────────────────────────────────────────────────────
     graph.set_entry_point("entry_router")
 
     # ── Edges ─────────────────────────────────────────────────────────────────
 
-    # entry_router → query_analyzer (rag) | direct_responder (unknown)
     graph.add_conditional_edges(
         "entry_router",
         route_after_entry_router,
@@ -179,10 +170,8 @@ def build_pipeline(vsm: VectorStoreManager = None) -> StateGraph:
         },
     )
 
-    # direct_responder (unknown queries) goes straight to end_success
     graph.add_edge("direct_responder", "end_success")
 
-    # query_analyzer → retrieval_planner | end_error
     graph.add_conditional_edges(
         "query_analyzer",
         route_after_query_analyzer,
@@ -192,89 +181,111 @@ def build_pipeline(vsm: VectorStoreManager = None) -> StateGraph:
         },
     )
 
-    # retrieval_planner → retriever (always)
     graph.add_conditional_edges(
         "retrieval_planner",
         route_after_retrieval_planner,
         {"retriever": "retriever"},
     )
 
-    # retriever → validator | query_analyzer (0-docs retry) | end_error | end_max_retries
     graph.add_conditional_edges(
         "retriever",
         route_after_retriever,
         {
             "validator":        "validator",
-            "query_analyzer":   "increment_retry",  # bump counter before retry
+            "query_analyzer":   "increment_retry",
             "end_error":        "end_error",
             "end_max_retries":  "end_max_retries",
         },
     )
 
-    # validator → context_refiner | retriever (retry) | end_max_retries
-    # (context_refiner_node itself handles the USE_CONTEXT_REFINER ablation bypass —
-    # see context_refiner.py; the node is always reached, never routed around)
     graph.add_conditional_edges(
         "validator",
         route_after_validator,
         {
-            "context_refiner":  "context_refiner",
-            "retriever":        "increment_retry",  # bump counter before retry
-            "end_max_retries":  "end_max_retries",
-            "end_error":        "end_error",
+            "context_refiner":     "context_refiner",
+            "targeted_retrieval":  "targeted_retrieval",
+            "retriever":           "increment_retry",
+            "end_max_retries":     "end_max_retries",
+            "end_error":           "end_error",
         },
     )
 
-    # context_refiner → generator (always)
+    graph.add_conditional_edges(
+        "targeted_retrieval",
+        route_after_targeted_retrieval,
+        {"validator": "validator"},
+    )
+
     graph.add_conditional_edges(
         "context_refiner",
         route_after_context_refiner,
         {"generator": "generator"},
     )
 
-    # generator → critic | end_success (ablation) | end_error
     graph.add_conditional_edges(
         "generator",
         route_after_generator,
         {
-            "critic":       "critic",
-            "end_success":  "end_success",
-            "end_error":    "end_error",
+            "claim_extractor": "claim_extractor",
+            "end_error":       "end_error",
         },
     )
 
-    # critic → end_success | query_analyzer (content retry) | generator (format retry) | end_max_retries
+    graph.add_conditional_edges(
+        "claim_extractor",
+        route_after_claim_extractor,
+        {
+            "claim_verifier": "claim_verifier",
+            "end_error":      "end_error",
+        },
+    )
+
+    graph.add_conditional_edges(
+        "claim_verifier",
+        route_after_claim_verifier,
+        {
+            "contradiction_detector": "contradiction_detector",
+            "end_error":              "end_error",
+        },
+    )
+
+    graph.add_conditional_edges(
+        "contradiction_detector",
+        route_after_contradiction_detector,
+        {
+            "critic":      "critic",
+            "end_success": "end_success",
+            "end_error":   "end_error",
+        },
+    )
+
     graph.add_conditional_edges(
         "critic",
         route_after_critic,
         {
-            "end_success":      "end_success",
-            "query_analyzer":   "increment_retry",
-            "generator":        "increment_retry",
-            "end_max_retries":  "end_max_retries",
+            "end_success":        "end_success",
+            "targeted_retrieval": "targeted_retrieval",
+            "query_analyzer":     "increment_retry",
+            "generator":          "increment_retry",
+            "end_max_retries":    "end_max_retries",
         },
     )
 
-    # increment_retry routes back to the node the router originally wanted
-    # We use a second routing pass after incrementing the counter.
-    # To avoid duplicating router logic, increment_retry re-evaluates via a
-    # thin router that reads retry_reason to pick the right destination.
     graph.add_conditional_edges(
         "increment_retry",
         _route_after_retry_increment,
         {
-            "query_analyzer":  "query_analyzer",
-            "retriever":       "retriever",
-            "generator":       "generator",
-            "end_max_retries": "end_max_retries",
+            "query_analyzer":     "query_analyzer",
+            "retriever":          "retriever",
+            "targeted_retrieval": "targeted_retrieval",
+            "generator":          "generator",
+            "end_max_retries":    "end_max_retries",
         },
     )
 
-    # Terminal nodes → END
     graph.add_edge("end_success", END)
     graph.add_edge("end_error",   END)
 
-    # end_max_retries → END
     graph.add_conditional_edges(
         "end_max_retries",
         route_after_max_retries,
@@ -287,11 +298,6 @@ def build_pipeline(vsm: VectorStoreManager = None) -> StateGraph:
 
 
 def _route_after_retry_increment(state: ACRagState) -> str:
-    """
-    After incrementing retry_count, decide where to actually go.
-    Reads retry_reason (set by router before increment_retry was called)
-    and validation_passed to determine the correct destination.
-    """
     from config.settings import MAX_RETRIES
 
     retry = state.get("retry_count", 0)
@@ -300,16 +306,17 @@ def _route_after_retry_increment(state: ACRagState) -> str:
 
     reason = state.get("retry_reason") or "content"
 
-    # If coming from critic with format issue → regenerate
     if reason == "format":
         return "generator"
 
-    # If validator failed → re-retrieve
+    if reason in ("unsupported_claim", "coverage"):
+        return "targeted_retrieval"
+
     if state.get("validation_passed") is False:
         return "retriever"
 
-    # If retriever returned 0 docs or critic content issue → re-analyse query
     return "query_analyzer"
+
 
 
 # ── Convenience run function ───────────────────────────────────────────────────

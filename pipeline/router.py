@@ -24,7 +24,7 @@ Route map:
 
 import logging
 from pipeline.state import ACRagState
-from config.settings import MAX_RETRIES, USE_RETRIEVAL_PLANNER, USE_CRITIC
+from config.settings import MAX_RETRIES, MAX_RETRIEVAL_ROUNDS, USE_RETRIEVAL_PLANNER, USE_CRITIC
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,6 @@ def route_after_query_analyzer(state: ACRagState) -> str:
 
 
 def route_after_retrieval_planner(state: ACRagState) -> str:
-    # Planner always feeds retriever (ablation is handled inside the node itself)
     return "retriever"
 
 
@@ -67,7 +66,7 @@ def route_after_retriever(state: ACRagState) -> str:
             logger.warning("[Router] retriever returned 0 docs, max retries hit → end_max_retries")
             return "end_max_retries"
         logger.info("[Router] retriever returned 0 docs, routing back to query_analyzer (retry %d)", retry + 1)
-        return "query_analyzer"   # re-analyse query before re-retrieving
+        return "query_analyzer"
 
     return "validator"
 
@@ -77,20 +76,30 @@ def route_after_validator(state: ACRagState) -> str:
         return "end_error"
 
     passed = state.get("validation_passed", False)
+    missing_reqs = state.get("missing_requirements") or []
+    retrieval_attempts = state.get("retrieval_attempts", 1)
+    retry = state.get("retry_count", 0)
+
     if passed:
-        # context_refiner_node handles the USE_CONTEXT_REFINER ablation bypass
-        # internally (bug fix 2026-08-20 — routing around the node entirely used
-        # to leave refined_context as None, see context_refiner.py for detail).
         return "context_refiner"
 
-    # Validation failed — retry retrieval
-    retry = state.get("retry_count", 0)
     if retry >= MAX_RETRIES:
-        logger.warning("[Router] validation failed, max retries hit → end_max_retries")
+        logger.warning("[Router] validator coverage failed, max retries hit → end_max_retries")
         return "end_max_retries"
 
-    logger.info("[Router] validation failed (retry %d) → retriever", retry + 1)
+    # If missing requirements exist and we have retrieval budget left, run targeted retrieval
+    if missing_reqs and retrieval_attempts < MAX_RETRIEVAL_ROUNDS:
+        logger.info("[Router] validator coverage incomplete (missing %d reqs, attempt %d) → targeted_retrieval", len(missing_reqs), retrieval_attempts)
+        return "targeted_retrieval"
+
+    logger.info("[Router] validator failed (retry %d) → retriever", retry + 1)
     return "retriever"
+
+
+
+def route_after_targeted_retrieval(state: ACRagState) -> str:
+    """Targeted retrieval feeds back to validator for evidence coverage re-assessment."""
+    return "validator"
 
 
 def route_after_context_refiner(state: ACRagState) -> str:
@@ -100,16 +109,35 @@ def route_after_context_refiner(state: ACRagState) -> str:
 def route_after_generator(state: ACRagState) -> str:
     if state.get("error"):
         return "end_error"
+    return "claim_extractor"
+
+
+def route_after_claim_extractor(state: ACRagState) -> str:
+    if state.get("error"):
+        return "end_error"
+    return "claim_verifier"
+
+
+def route_after_claim_verifier(state: ACRagState) -> str:
+    if state.get("error"):
+        return "end_error"
+    return "contradiction_detector"
+
+
+def route_after_contradiction_detector(state: ACRagState) -> str:
+    if state.get("error"):
+        return "end_error"
     if USE_CRITIC:
         return "critic"
-    return "end_success"   # ablation: skip critic
+    return "end_success"
 
 
 def route_after_critic(state: ACRagState) -> str:
     passed = state.get("critic_passed", False)
+    abstained = state.get("abstained", False)
 
-    if passed:
-        logger.info("[Router] critic passed → end_success")
+    if passed or abstained:
+        logger.info("[Router] critic completed (passed=%s, abstained=%s) → end_success", passed, abstained)
         return "end_success"
 
     retry = state.get("retry_count", 0)
@@ -121,7 +149,10 @@ def route_after_critic(state: ACRagState) -> str:
     if reason == "format":
         logger.info("[Router] critic format issue (retry %d) → generator", retry + 1)
         return "generator"
+    elif reason in ("unsupported_claim", "coverage") and state.get("retrieval_attempts", 1) < MAX_RETRIEVAL_ROUNDS:
+        logger.info("[Router] critic %s issue (retry %d) → targeted_retrieval", reason, retry + 1)
+        return "targeted_retrieval"
 
-    # Default: content issue → full restart from query_analyzer
     logger.info("[Router] critic content issue (retry %d) → query_analyzer", retry + 1)
     return "query_analyzer"
+

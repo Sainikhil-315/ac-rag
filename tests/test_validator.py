@@ -13,8 +13,8 @@ from tests.conftest import make_doc
 
 def test_validator_passes_when_enough_docs_clear_threshold(monkeypatch):
     monkeypatch.setattr(validator_mod, "USE_VALIDATOR", True)
+    monkeypatch.setattr(validator_mod, "USE_EVIDENCE_COVERAGE", True)
     monkeypatch.setattr(validator_mod, "EVIDENCE_SCORE_THRESHOLD", 0.20)
-    monkeypatch.setattr(validator_mod, "MIN_VALID_PASSAGES", 2)
     monkeypatch.setattr(
         validator_mod, "score_passages_against_query",
         lambda query, texts: [0.5, 0.3, 0.1],
@@ -27,16 +27,16 @@ def test_validator_passes_when_enough_docs_clear_threshold(monkeypatch):
     result = validator_mod.validator_node(state)
 
     assert result["validation_passed"] is True
-    assert len(result["scored_docs"]) == 2  # only the two >= 0.20 survive
+    assert len(result["scored_docs"]) == 3
 
 
 def test_validator_fails_when_too_few_docs_clear_threshold(monkeypatch):
     monkeypatch.setattr(validator_mod, "USE_VALIDATOR", True)
-    monkeypatch.setattr(validator_mod, "EVIDENCE_SCORE_THRESHOLD", 0.20)
-    monkeypatch.setattr(validator_mod, "MIN_VALID_PASSAGES", 2)
+    monkeypatch.setattr(validator_mod, "USE_EVIDENCE_COVERAGE", True)
+    monkeypatch.setattr(validator_mod, "COVERAGE_THRESHOLD", 0.60)
     monkeypatch.setattr(
         validator_mod, "score_passages_against_query",
-        lambda query, texts: [0.28, 0.15],  # only one clears 0.20
+        lambda query, texts: [0.15, 0.10],
     )
 
     state = {
@@ -46,7 +46,8 @@ def test_validator_fails_when_too_few_docs_clear_threshold(monkeypatch):
     result = validator_mod.validator_node(state)
 
     assert result["validation_passed"] is False
-    assert len(result["scored_docs"]) == 1
+    assert len(result["scored_docs"]) == 2
+
 
 
 def test_validator_ablation_bypass_passes_everything_unscored(monkeypatch):

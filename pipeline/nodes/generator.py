@@ -64,16 +64,17 @@ class GeneratedAnswer(BaseModel):
 
 # ── Prompt ────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You are a precise document question-answering assistant.
+_SYSTEM_PROMPT = """You are a precise document question-answering assistant operating under strict evidence constraints.
 
 STRICT RULES — you MUST follow all of these:
-1. Answer ONLY using information explicitly present in the provided context.
+1. Answer ONLY using information explicitly present in the approved context.
 2. Do NOT add any knowledge from outside the context, even if you are certain it is correct.
 3. Cite EVERY claim with its source number in brackets, e.g. [1] or [2][3].
 4. If the context contains tables or figures (marked with modality=table/figure), read them carefully.
 5. If the answer spans multiple sources, cite all of them for the relevant claim.
-6. If the context does not contain enough information, state this clearly — do NOT guess.
-7. Be concise but complete. Do not pad the answer with unnecessary text.
+6. If critical evidence or facts are missing from the context, state explicitly that the source material does not establish the answer for those missing parts.
+7. Do NOT fabricate missing numbers, configuration parameters, or entity properties.
+8. Be concise, direct, and complete.
 
 Context format:
   [SOURCE N | file=... | page=... | section=... | chunk=... | score=... | modality=...]
@@ -81,14 +82,14 @@ Context format:
 
 Each SOURCE tag identifies a passage. Use [N] inline to cite it."""
 
-_HUMAN_PROMPT = """Context:
+_HUMAN_PROMPT = """Approved Evidence Context:
 {context}
 
 ---
 
 Question: {query}
 
-Answer the question using ONLY the context above. Cite sources inline with [N]."""
+Answer the question using ONLY the approved evidence context above. Cite sources inline with [N]."""
 
 _prompt = ChatPromptTemplate.from_messages([
     ("system", _SYSTEM_PROMPT),
@@ -101,8 +102,8 @@ _prompt = ChatPromptTemplate.from_messages([
 def generator_node(state: ACRagState) -> ACRagState:
     """
     LangGraph node: Generator (full implementation).
-    Reads:  state["query"], state["refined_context"]
-    Writes: state["answer"], state["answer_with_attribution"]
+    Reads:  state["query"], state["refined_context"], state["evidence_requirements"]
+    Writes: state["answer"], state["answer_with_attribution"], state["is_answerable"]
     """
     query = state["query"]
     # NOTE: use `or ""`, not a .get() default — initial_state() sets refined_context=None
@@ -121,8 +122,9 @@ def generator_node(state: ACRagState) -> ACRagState:
         log_entry["details"]["is_answerable"] = False
         return {
             **state,
-            "answer": "The provided documents do not contain sufficient information to answer this question.",
+            "answer": "The provided documents do not contain sufficient evidence to answer this question.",
             "answer_with_attribution": [],
+            "is_answerable": False,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 
@@ -160,6 +162,7 @@ def generator_node(state: ACRagState) -> ACRagState:
             **state,
             "answer": clean_answer,
             "answer_with_attribution": attribution,
+            "is_answerable": result.is_answerable,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 

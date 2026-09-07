@@ -80,9 +80,9 @@ def test_generator_error_ends_pipeline():
     assert route_after_generator(state) == "end_error"
 
 
-def test_generator_success_goes_to_critic():
+def test_generator_success_goes_to_claim_extractor():
     state = initial_state("q")
-    assert route_after_generator(state) == "critic"
+    assert route_after_generator(state) == "claim_extractor"
 
 
 def test_critic_pass_ends_success():
@@ -110,6 +110,17 @@ def test_critic_format_failure_regenerates_only():
     assert route_after_critic(state) == "generator"
 
 
+def test_critic_unsupported_claim_routes_to_targeted_retrieval():
+    state = {
+        **initial_state("q"),
+        "critic_passed": False,
+        "retry_reason": "unsupported_claim",
+        "retrieval_attempts": 1,
+        "retry_count": 0,
+    }
+    assert route_after_critic(state) == "targeted_retrieval"
+
+
 def test_critic_failure_stops_at_max_retries():
     state = {
         **initial_state("q"),
@@ -122,3 +133,4 @@ def test_critic_failure_stops_at_max_retries():
 
 def test_max_retries_always_ends():
     assert route_after_max_retries(initial_state("q")) == "end"
+

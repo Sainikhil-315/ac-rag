@@ -30,6 +30,27 @@ logger = logging.getLogger(__name__)
 
 # ── Pydantic output schema ─────────────────────────────────────────────────────
 
+class EvidenceRequirementSpec(BaseModel):
+    id: str = Field(description="Requirement ID, e.g., 'R1', 'R2'")
+    requirement: str = Field(description="Short description of what specific information must be established")
+    requirement_type: str = Field(
+        default="fact",
+        description="Type: 'fact', 'value', 'definition', 'procedure', 'comparison', 'relationship', 'summary', 'numeric', 'table', or 'figure'"
+    )
+    priority: str = Field(
+        default="critical",
+        description="Priority: 'critical', 'high', 'medium', or 'low'"
+    )
+    keywords: List[str] = Field(
+        default_factory=list,
+        description="Key search terms for retrieval"
+    )
+    expected_modality: str = Field(
+        default="text",
+        description="Expected modality: 'text', 'table', 'figure', or 'all'"
+    )
+
+
 class QueryAnalysis(BaseModel):
     rewritten_query: str = Field(
         description=(
@@ -53,31 +74,39 @@ class QueryAnalysis(BaseModel):
         default_factory=list,
         description="Sub-queries if complex (complexity >= 0.6), else empty list"
     )
+    evidence_requirements: List[EvidenceRequirementSpec] = Field(
+        default_factory=list,
+        description="List of 1 to 6 independently verifiable evidence requirements needed to answer the question"
+    )
 
 
 # ── Prompt ────────────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You are a query analysis expert for a document QA system.
+_SYSTEM_PROMPT = """You are an evidence requirement planner and query analysis expert for a document QA system.
 Analyse the user's query and return a structured JSON response.
 
 Query rewriting rules (rewritten_query field):
   - Fix spelling mistakes, grammar errors, and incomplete sentences
   - Resolve vague pronouns ("it", "that", "they") using context clues in the query,
-    OR using the conversation history if provided below — e.g. if the previous turn
-    discussed "the validator" and the current query asks "what's its threshold?",
-    rewrite to "what is the validator's threshold?"
+    OR using the conversation history if provided below.
   - Expand abbreviations if their meaning is inferable
-  - Make the question self-contained and specific enough for vector search
-  - Do NOT add information that isn't implied by the original query or prior turns
-  - If the original query is already clear and specific, return it unchanged
-  - If conversation history is provided but the current query is already
-    self-contained (doesn't reference prior turns), ignore the history
+  - Make the question self-contained and specific enough for vector/lexical search
+  - If original query is already clear, return it unchanged
 
 Intent categories:
   - factual       : asking for a specific fact, number, date, or definition
   - analytical    : asking to explain, analyse, or reason about something
   - comparative   : asking to compare two or more things
   - summarization : asking for a summary or overview
+
+Evidence Requirement Planning rules (evidence_requirements field):
+  - Identify the minimum independently verifiable information needed to answer the query correctly.
+  - Return short requirement descriptions, NOT answers.
+  - Assign stable IDs: R1, R2, R3, etc.
+  - For factual/value/numeric questions, preserve exact entity names and target parameter names in keywords.
+  - For comparative questions, create corresponding requirements for each side/aspect.
+  - For table/figure questions, set expected_modality to 'table' or 'figure'.
+  - Maximum 6 requirements.
 
 Complexity scoring guide:
   0.0–0.3 : Single fact lookup, one document needed
@@ -99,24 +128,19 @@ _prompt = ChatPromptTemplate.from_messages([
     ("human", _HUMAN_PROMPT),
 ])
 
-_MAX_HISTORY_TURNS = 3  # most recent N turns only — older context rarely matters and costs tokens
+_MAX_HISTORY_TURNS = 3  # most recent N turns only
 
 
 def _format_history(history) -> str:
-    """
-    Render the last few conversation turns as a text block for the prompt.
-    Returns "" if there's no history — keeps the prompt identical to the
-    pre-multi-turn behavior for single-shot queries (CLI, eval runs).
-    """
     if not history:
         return ""
     recent = history[-_MAX_HISTORY_TURNS:]
     lines = ["Conversation history (most recent last):"]
     for turn in recent:
         role = turn.get("role", "user")
-        content = (turn.get("content") or "")[:500]  # cap length per turn
+        content = (turn.get("content") or "")[:500]
         lines.append(f"  {role}: {content}")
-    lines.append("")  # blank line separating history from the current query
+    lines.append("")
     return "\n".join(lines) + "\n"
 
 
@@ -130,9 +154,10 @@ def _get_analyzer_chain():
 
 def query_analyzer_node(state: ACRagState) -> ACRagState:
     """
-    LangGraph node: Query Analyzer.
-    Reads:  state["query"]
-    Writes: state["rewritten_query"], state["intent"], state["complexity_score"], state["decomposed_queries"]
+    LangGraph node: Query Analyzer & Evidence Requirement Planner.
+    Reads:  state["query"], state["conversation_history"]
+    Writes: state["rewritten_query"], state["intent"], state["complexity_score"],
+            state["decomposed_queries"], state["evidence_requirements"]
     """
     query = state["query"]
     history_block = _format_history(state.get("conversation_history"))
@@ -147,6 +172,35 @@ def query_analyzer_node(state: ACRagState) -> ACRagState:
         if result.complexity_score < 0.6:
             result.decomposed_queries = []
 
+        # Convert Pydantic EvidenceRequirementSpec items into state EvidenceRequirement dicts
+        req_dicts = []
+        if result.evidence_requirements:
+            for r in result.evidence_requirements:
+                req_dicts.append({
+                    "id": r.id or f"R{len(req_dicts)+1}",
+                    "requirement": r.requirement,
+                    "requirement_type": r.requirement_type,
+                    "priority": r.priority,
+                    "keywords": r.keywords,
+                    "expected_modality": r.expected_modality,
+                    "status": "MISSING",
+                    "support_score": 0.0,
+                    "supporting_evidence_ids": [],
+                })
+        else:
+            # Default requirement if none provided
+            req_dicts.append({
+                "id": "R1",
+                "requirement": result.rewritten_query or query,
+                "requirement_type": "fact",
+                "priority": "critical",
+                "keywords": [query],
+                "expected_modality": "all",
+                "status": "MISSING",
+                "support_score": 0.0,
+                "supporting_evidence_ids": [],
+            })
+
         # Log if the query was actually changed
         if result.rewritten_query != query:
             logger.info("[QueryAnalyzer] Query rewritten: '%s' → '%s'", query, result.rewritten_query)
@@ -154,8 +208,8 @@ def query_analyzer_node(state: ACRagState) -> ACRagState:
             logger.info("[QueryAnalyzer] Query unchanged after rewrite")
 
         logger.info(
-            "[QueryAnalyzer] intent=%s | complexity=%.2f | sub-queries=%d",
-            result.intent, result.complexity_score, len(result.decomposed_queries)
+            "[QueryAnalyzer] intent=%s | complexity=%.2f | sub-queries=%d | requirements=%d",
+            result.intent, result.complexity_score, len(result.decomposed_queries), len(req_dicts)
         )
 
         log_entry["status"] = "completed"
@@ -165,6 +219,7 @@ def query_analyzer_node(state: ACRagState) -> ACRagState:
             "complexity_score": result.complexity_score,
             "complexity_reason": result.complexity_reason,
             "num_sub_queries": len(result.decomposed_queries),
+            "num_requirements": len(req_dicts),
         })
 
         return {
@@ -173,6 +228,7 @@ def query_analyzer_node(state: ACRagState) -> ACRagState:
             "intent": result.intent,
             "complexity_score": result.complexity_score,
             "decomposed_queries": result.decomposed_queries,
+            "evidence_requirements": req_dicts,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
 
@@ -180,8 +236,27 @@ def query_analyzer_node(state: ACRagState) -> ACRagState:
         logger.error("[QueryAnalyzer] Failed: %s", e)
         log_entry["status"] = "failed"
         log_entry["details"]["error"] = str(e)
+
+        # Build fallback single requirement
+        fallback_reqs = [{
+            "id": "R1",
+            "requirement": query,
+            "requirement_type": "fact",
+            "priority": "critical",
+            "keywords": [query],
+            "expected_modality": "all",
+            "status": "MISSING",
+            "support_score": 0.0,
+            "supporting_evidence_ids": [],
+        }]
+
         return {
             **state,
-            "error": f"QueryAnalyzer failed: {e}",
+            "rewritten_query": query,
+            "intent": "factual",
+            "complexity_score": 0.3,
+            "decomposed_queries": [],
+            "evidence_requirements": fallback_reqs,
             "stage_logs": state["stage_logs"] + [log_entry],
         }
+

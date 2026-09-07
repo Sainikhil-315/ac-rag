@@ -109,13 +109,33 @@ def _retrieve_single(
     query: str,
     plan: RetrievalPlan,
 ) -> List[Dict]:
-    """Run MMR search for a single query string."""
-    docs = vsm.mmr_search(
-        query=query,
-        k=plan["k"],
-        fetch_k=plan["fetch_k"],
-        lambda_mult=plan["lambda_mult"],
-    )
+    """Run search for a single query string using planned strategy (hybrid, bm25, or dense)."""
+    strategy = plan.get("strategy", "hybrid")
+    k = plan["k"]
+    modality = plan.get("modality_filter", "all")
+
+    if strategy == "bm25":
+        docs = vsm.bm25_search(query=query, k=k, modality_filter=modality)
+    elif strategy == "hybrid":
+        l_weight = plan.get("lexical_weight", 0.5)
+        d_weight = plan.get("dense_weight", 0.5)
+        docs = vsm.hybrid_search(
+            query=query,
+            k=k,
+            fetch_k=plan["fetch_k"],
+            lambda_mult=plan["lambda_mult"],
+            modality_filter=modality,
+            dense_weight=d_weight,
+            bm25_weight=l_weight,
+        )
+    else:
+        docs = vsm.mmr_search(
+            query=query,
+            k=k,
+            fetch_k=plan["fetch_k"],
+            lambda_mult=plan["lambda_mult"],
+        )
+
     return [_doc_to_dict(doc, query) for doc in docs]
 
 
@@ -125,7 +145,7 @@ def _retrieve_multi(
     plan: RetrievalPlan,
 ) -> List[Dict]:
     """
-    Run MMR for each sub-query, merge results, deduplicate.
+    Run search for each sub-query, merge results, deduplicate.
     k is distributed across sub-queries (each gets k//n, min 2).
     Final list is deduplicated and capped at plan["k"].
     """
@@ -140,7 +160,6 @@ def _retrieve_multi(
         logger.debug("[Retriever] Sub-query '%s' → %d docs", q[:60], len(results))
 
     unique = _deduplicate(all_docs)
-    # Cap at plan["k"] after dedup, prioritising first-retrieved (highest MMR score)
     return unique[: plan["k"]]
 
 
@@ -149,22 +168,19 @@ def _retrieve_multi(
 def make_retriever_node(vsm: VectorStoreManager):
     """
     Factory that binds a loaded VectorStoreManager to the retriever node.
-    Use this pattern to inject the VSM once at pipeline startup:
-
-        vsm = VectorStoreManager(); vsm.load()
-        retriever_node = make_retriever_node(vsm)
     """
 
     def retriever_node(state: ACRagState) -> ACRagState:
         """
         LangGraph node: Retriever.
         Reads:  state["query"], state["decomposed_queries"], state["retrieval_plan"]
-        Writes: state["retrieved_docs"]
+        Writes: state["retrieved_docs"], state["retrieved_evidence"], state["retrieval_attempts"]
         """
         query = state.get("rewritten_query") or state["query"]
         plan: RetrievalPlan = state.get("retrieval_plan") or _default_plan()
         sub_queries: List[str] = state.get("decomposed_queries") or []
 
+        retrieval_attempts = state.get("retrieval_attempts", 0) + 1
         retry_count = state.get("retry_count", 0)
         original_k = plan["k"]
         plan = _escalate_plan_for_retry(plan, retry_count)
@@ -180,6 +196,7 @@ def make_retriever_node(vsm: VectorStoreManager):
             "details": {
                 "query": query,
                 "k": plan["k"],
+                "strategy": plan.get("strategy", "hybrid"),
                 "modality": plan["modality_filter"],
                 "multi_query": plan["use_multi_query"],
                 "num_sub_queries": len(sub_queries),
@@ -187,8 +204,8 @@ def make_retriever_node(vsm: VectorStoreManager):
             },
         }
         logger.info(
-            "[Retriever] k=%d | modality=%s | multi_query=%s",
-            plan["k"], plan["modality_filter"], plan["use_multi_query"]
+            "[Retriever] k=%d | strategy=%s | modality=%s | multi_query=%s",
+            plan["k"], plan.get("strategy", "hybrid"), plan["modality_filter"], plan["use_multi_query"]
         )
 
         try:
@@ -205,12 +222,32 @@ def make_retriever_node(vsm: VectorStoreManager):
 
             logger.info("[Retriever] After modality filter: %d docs", len(filtered))
 
+            # Build EvidenceItem list for state contract
+            evidence_items = []
+            for idx, d in enumerate(filtered, start=1):
+                meta = d.get("metadata", {})
+                score_val = meta.get("score") or d.get("score") or 0.8
+                evidence_items.append({
+                    "id": f"E{idx}",
+                    "content": d["content"],
+                    "source": meta.get("source", d.get("source", "unknown")),
+                    "page": meta.get("page", d.get("page")),
+                    "section": meta.get("section_heading", d.get("section_heading", "Unknown")),
+                    "chunk_id": d.get("chunk_id", "unknown"),
+                    "modality": meta.get("modality", d.get("modality", "text")),
+                    "retrieval_method": meta.get("retrieval_method", plan.get("strategy", "hybrid")),
+                    "retrieval_score": float(score_val),
+                    "rerank_score": float(score_val),
+                })
+
             log_entry["status"] = "completed"
             log_entry["details"]["docs_retrieved"] = len(filtered)
 
             return {
                 **state,
                 "retrieved_docs": filtered,
+                "retrieved_evidence": evidence_items,
+                "retrieval_attempts": retrieval_attempts,
                 "stage_logs": state["stage_logs"] + [log_entry],
             }
 
@@ -237,4 +274,8 @@ def _default_plan() -> RetrievalPlan:
         modality_filter="all",
         use_multi_query=False,
         retrieval_depth="standard",
+        strategy="hybrid",
+        lexical_weight=0.5,
+        dense_weight=0.5,
     )
+
