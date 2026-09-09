@@ -1,0 +1,8 @@
+[
+  {
+    "id": 1,
+    "question": "What are the two main failures of traditional RAG systems mentioned in the paper?",
+    "answer": "Fixed retrieval depth regardless of query complexity and lack of comparison between generated responses and retrieved evidence.",
+    "type": "factual"
+  }
+]

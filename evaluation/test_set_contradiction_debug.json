@@ -1,0 +1,26 @@
+[
+  {
+    "id": 12,
+    "question": "Why is evidence validation important in AC-RAG?",
+    "answer": "It filters out irrelevant or low-quality passages, ensuring only relevant evidence is used for answer generation.",
+    "type": "analytical"
+  },
+  {
+    "id": 18,
+    "question": "What happens when content-related issues are detected in self-reflection?",
+    "answer": "The system returns to the query understanding stage for retry.",
+    "type": "analytical"
+  },
+  {
+    "id": 41,
+    "question": "How does AC-RAG's architecture compare to the original RAG (2020) system across the eight evaluated dimensions?",
+    "answer": "AC-RAG supports all eight dimensions (dense retrieval, adaptive retrieval, multi-agent architecture, evidence validation, context refinement, self-reflection, feedback, and no fine-tuning), while RAG (2020) only supports dense retrieval and requires no fine-tuning \u00e2\u20ac\u201d it lacks adaptive retrieval, multi-agent architecture, evidence validation, context refinement, self-reflection, and feedback.",
+    "type": "comparative"
+  },
+  {
+    "id": 46,
+    "question": "How does ReAct (2023) compare to AC-RAG in terms of adaptive retrieval support?",
+    "answer": "ReAct (2023) is marked with only partial support for both dense and adaptive retrieval in the comparison table, whereas AC-RAG fully supports adaptive retrieval via its Retrieval Planner.",
+    "type": "comparative"
+  }
+]

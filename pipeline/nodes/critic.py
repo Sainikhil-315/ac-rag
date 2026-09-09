@@ -201,6 +201,10 @@ def _compute_evidence_confidence(
     coverage_list = state.get("evidence_coverage") or []
     verifications = state.get("claim_verifications") or []
     contradictions = state.get("contradictions") or []
+    unresolved_contradictions = [
+        c for c in contradictions
+        if (c.get("resolution_status") or "unresolved").lower() == "unresolved"
+    ]
 
     # 1. Requirement coverage score
     if coverage_list:
@@ -219,7 +223,7 @@ def _compute_evidence_confidence(
     evidence_quality = max(0.0, min(1.0, overall_critic / 5.0))
 
     # 4. Contradiction penalty
-    contradiction_ratio = min(1.0, len(contradictions) * 0.5)
+    contradiction_ratio = min(1.0, len(unresolved_contradictions) * 0.5)
 
     confidence = (
         CONFIDENCE_W_COVERAGE * coverage_score
@@ -267,7 +271,10 @@ def critic_node(state: ACRagState) -> ACRagState:
     context = state.get("refined_context", "")
     answer = state.get("answer", "")
     verifications = state.get("claim_verifications") or []
-    contradictions = state.get("contradictions") or []
+    contradictions = [
+        c for c in (state.get("contradictions") or [])
+        if (c.get("resolution_status") or "unresolved").lower() == "unresolved"
+    ]
 
     log_entry: Dict[str, Any] = {
         "stage": "critic",

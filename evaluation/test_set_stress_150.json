@@ -1,0 +1,902 @@
+[
+  {
+    "id": 1,
+    "question": "What are the two main failures of traditional RAG systems identified in the paper?",
+    "answer": "Fixed retrieval depth regardless of query complexity, and generated responses are not compared with the retrieved evidence.",
+    "type": "factual"
+  },
+  {
+    "id": 2,
+    "question": "What does AC-RAG stand for in the paper?",
+    "answer": "Agent-Controlled RAG.",
+    "type": "factual"
+  },
+  {
+    "id": 3,
+    "question": "What kind of system is AC-RAG?",
+    "answer": "A multi-agent document question-answering system.",
+    "type": "factual"
+  },
+  {
+    "id": 4,
+    "question": "What evaluation framework is used in the experiments?",
+    "answer": "RAGAS.",
+    "type": "factual"
+  },
+  {
+    "id": 5,
+    "question": "What are the three document modalities explicitly supported by the system?",
+    "answer": "Text, tables, and figures.",
+    "type": "factual"
+  },
+  {
+    "id": 6,
+    "question": "What framework handles agent coordination and conditional routing?",
+    "answer": "LangGraph.",
+    "type": "factual"
+  },
+  {
+    "id": 7,
+    "question": "What vector storage system is described in the paper's experimental setup?",
+    "answer": "ChromaDB.",
+    "type": "factual"
+  },
+  {
+    "id": 8,
+    "question": "What embedding model is listed in the experimental setup?",
+    "answer": "text-embedding-3-large.",
+    "type": "factual"
+  },
+  {
+    "id": 9,
+    "question": "What language model is listed for query understanding and answer generation?",
+    "answer": "GPT-4o.",
+    "type": "factual"
+  },
+  {
+    "id": 10,
+    "question": "What model is listed for self-reflection?",
+    "answer": "o3-mini.",
+    "type": "factual"
+  },
+  {
+    "id": 11,
+    "question": "What is the chunk size used in the experimental parameters?",
+    "answer": "600 characters.",
+    "type": "factual"
+  },
+  {
+    "id": 12,
+    "question": "What is the chunk overlap?",
+    "answer": "100 characters.",
+    "type": "factual"
+  },
+  {
+    "id": 13,
+    "question": "What retrieval range is used for k?",
+    "answer": "4 to 12.",
+    "type": "factual"
+  },
+  {
+    "id": 14,
+    "question": "What evidence threshold is listed in the experimental parameters?",
+    "answer": "0.65.",
+    "type": "factual"
+  },
+  {
+    "id": 15,
+    "question": "What self-reflection threshold is used?",
+    "answer": "4 out of 5.",
+    "type": "factual"
+  },
+  {
+    "id": 16,
+    "question": "How many max retrieval retries are listed in the paper?",
+    "answer": "3.",
+    "type": "factual"
+  },
+  {
+    "id": 17,
+    "question": "How many max reflection retries are listed in the paper?",
+    "answer": "3.",
+    "type": "factual"
+  },
+  {
+    "id": 18,
+    "question": "What retrieval method is used to balance similarity and diversity?",
+    "answer": "Maximum Marginal Relevance (MMR).",
+    "type": "factual"
+  },
+  {
+    "id": 19,
+    "question": "What does the query understanding stage identify?",
+    "answer": "The purpose/intent and sophistication or complexity of the query, and it can rewrite or break complex queries into sub-queries.",
+    "type": "factual"
+  },
+  {
+    "id": 20,
+    "question": "What does the retrieval planner determine?",
+    "answer": "Retrieval depth and the relevant content modality based on query complexity and query nature.",
+    "type": "factual"
+  },
+  {
+    "id": 21,
+    "question": "What does the evidence validation stage do?",
+    "answer": "It scores retrieved passages for relevance and removes low-quality passages.",
+    "type": "factual"
+  },
+  {
+    "id": 22,
+    "question": "What does context refinement do?",
+    "answer": "It removes redundancy, filters weak material, ranks the remaining passages, and forms a coherent context window.",
+    "type": "factual"
+  },
+  {
+    "id": 23,
+    "question": "What is the main purpose of answer generation?",
+    "answer": "To generate an answer conditioned on the refined context without unsupported information.",
+    "type": "factual"
+  },
+  {
+    "id": 24,
+    "question": "Which five dimensions are used by self-reflection?",
+    "answer": "Faithfulness, completeness, table accuracy, figure accuracy, and conciseness.",
+    "type": "factual"
+  },
+  {
+    "id": 25,
+    "question": "When is a generated response accepted by the self-reflection stage?",
+    "answer": "When all five reflection scores reach or exceed the threshold of 4.",
+    "type": "factual"
+  },
+  {
+    "id": 26,
+    "question": "What happens when a content-related response failure is detected?",
+    "answer": "The system goes back to the query-understanding stage with new inputs.",
+    "type": "factual"
+  },
+  {
+    "id": 27,
+    "question": "What happens when a format-related failure is detected?",
+    "answer": "The answer is regenerated using the same context.",
+    "type": "factual"
+  },
+  {
+    "id": 28,
+    "question": "Why are retry limits included?",
+    "answer": "To prevent the pipeline from running forever.",
+    "type": "factual"
+  },
+  {
+    "id": 29,
+    "question": "How many question-answer pairs does the paper say were selected for evaluation?",
+    "answer": "50 question-answer pairs.",
+    "type": "factual"
+  },
+  {
+    "id": 30,
+    "question": "What three broad question types does the paper describe in its original evaluation?",
+    "answer": "Factual, analytical, and table/figure questions.",
+    "type": "factual"
+  },
+  {
+    "id": 31,
+    "question": "Why does AC-RAG vary retrieval depth instead of using one fixed number of passages for every query?",
+    "answer": "Because simple queries need less context while complex queries may require more evidence; varying depth aims to reduce noise for simple queries and improve coverage for complex ones.",
+    "type": "analytical"
+  },
+  {
+    "id": 32,
+    "question": "How does query complexity influence retrieval in AC-RAG?",
+    "answer": "Higher-complexity queries receive deeper retrieval, while simpler queries receive fewer passages.",
+    "type": "analytical"
+  },
+  {
+    "id": 33,
+    "question": "How does the retrieval planner use content modality?",
+    "answer": "It can select text, tables, or figures according to the nature of the query.",
+    "type": "analytical"
+  },
+  {
+    "id": 34,
+    "question": "Why can breaking a complex query into sub-queries improve retrieval?",
+    "answer": "It reduces ambiguity and allows information distributed across different parts of the document to be retrieved separately.",
+    "type": "analytical"
+  },
+  {
+    "id": 35,
+    "question": "How does MMR support the document retrieval stage?",
+    "answer": "It balances similarity with diversity, reducing redundancy in the retrieved set.",
+    "type": "analytical"
+  },
+  {
+    "id": 36,
+    "question": "What happens if evidence validation leaves too little evidence?",
+    "answer": "The system returns to retrieval planning with feedback so retrieval parameters can be adjusted.",
+    "type": "analytical"
+  },
+  {
+    "id": 37,
+    "question": "Why is evidence validation placed before context refinement?",
+    "answer": "It filters out low-quality or irrelevant passages before the remaining evidence is organized into the final context.",
+    "type": "analytical"
+  },
+  {
+    "id": 38,
+    "question": "How does context refinement prepare evidence for generation?",
+    "answer": "It removes redundancy and weak material, ranks the remaining passages, and combines them into a coherent context window.",
+    "type": "analytical"
+  },
+  {
+    "id": 39,
+    "question": "How is answer generation constrained by the evidence?",
+    "answer": "The generator is instructed to stay within the refined retrieved evidence and trace response information to retrieved passages.",
+    "type": "analytical"
+  },
+  {
+    "id": 40,
+    "question": "How does self-reflection influence whether an answer reaches the user?",
+    "answer": "It scores the generated answer on five quality dimensions and accepts it only when the required threshold is met.",
+    "type": "analytical"
+  },
+  {
+    "id": 41,
+    "question": "What two different recovery paths are described after self-reflection?",
+    "answer": "Content failures return to query understanding with new inputs, while format failures regenerate using the same context.",
+    "type": "analytical"
+  },
+  {
+    "id": 42,
+    "question": "Why does the paper describe the architecture as modular?",
+    "answer": "Different stages have specialized roles such as query understanding, planning, retrieval, validation, refinement, generation, and reflection.",
+    "type": "analytical"
+  },
+  {
+    "id": 43,
+    "question": "How does the shared LangGraph state support the pipeline?",
+    "answer": "It carries information such as the query, retrieved passages, validation scores, and generated answer through the stages.",
+    "type": "analytical"
+  },
+  {
+    "id": 44,
+    "question": "Why can modality-specific stores help table and figure questions?",
+    "answer": "Separating text, tables, and figures allows retrieval to focus on the content type relevant to a query.",
+    "type": "analytical"
+  },
+  {
+    "id": 45,
+    "question": "How are figures made searchable in the described system?",
+    "answer": "A vision-capable model produces textual descriptions of figure content, making the visual information searchable through text.",
+    "type": "analytical"
+  },
+  {
+    "id": 46,
+    "question": "Why does fixed-depth retrieval create a trade-off for simple and complex questions?",
+    "answer": "Too much context can add irrelevant data to simple questions, while too little context can leave complex questions with partial evidence.",
+    "type": "analytical"
+  },
+  {
+    "id": 47,
+    "question": "How does AC-RAG attempt to reduce unsupported statements?",
+    "answer": "It validates retrieved evidence, refines the context, constrains generation to evidence, and applies self-reflection before accepting the answer.",
+    "type": "analytical"
+  },
+  {
+    "id": 48,
+    "question": "How does the system use feedback after a failed content evaluation?",
+    "answer": "Feedback causes the pipeline to revisit query understanding and then perform corrective retrieval or processing.",
+    "type": "analytical"
+  },
+  {
+    "id": 49,
+    "question": "Why is the underlying language model not changed as part of the claimed method?",
+    "answer": "The architecture is intended to improve reliability through retrieval control, validation, and reflection rather than by fine-tuning or changing the underlying model.",
+    "type": "analytical"
+  },
+  {
+    "id": 50,
+    "question": "How do the query-understanding and retrieval-planning stages work together?",
+    "answer": "Query understanding determines intent and complexity, and the planner uses that information to select retrieval depth and modality.",
+    "type": "analytical"
+  },
+  {
+    "id": 51,
+    "question": "How do retrieval, validation, and refinement form a sequential evidence-control process?",
+    "answer": "Retrieval gathers candidate passages, validation filters them for relevance, and refinement organizes the surviving evidence into a cleaner context.",
+    "type": "analytical"
+  },
+  {
+    "id": 52,
+    "question": "Why is the multi-agent design relevant to adaptive retrieval?",
+    "answer": "Specialized stages can modify retrieval and processing according to the query instead of applying one fixed procedure.",
+    "type": "analytical"
+  },
+  {
+    "id": 53,
+    "question": "How does the retry mechanism preserve bounded execution?",
+    "answer": "Separate retry counters limit retrieval and reflection retries, so repeated failures eventually terminate with the best response available.",
+    "type": "analytical"
+  },
+  {
+    "id": 54,
+    "question": "What is the relationship between retrieval depth and context noise in the paper's motivation?",
+    "answer": "More retrieval can increase coverage for difficult questions but can also introduce irrelevant information for easy questions.",
+    "type": "analytical"
+  },
+  {
+    "id": 55,
+    "question": "Why can analytical questions require several sections of a document?",
+    "answer": "Their answers may depend on combining multiple pieces of information rather than finding one direct passage.",
+    "type": "analytical"
+  },
+  {
+    "id": 56,
+    "question": "How does the system handle information distributed across multiple document sections?",
+    "answer": "It can decompose complex queries into sub-queries and process them individually during retrieval.",
+    "type": "analytical"
+  },
+  {
+    "id": 57,
+    "question": "Why is post-generation checking important according to the paper?",
+    "answer": "Retrieved evidence alone does not guarantee that the generated answer is faithful to it, so the response must also be checked.",
+    "type": "analytical"
+  },
+  {
+    "id": 58,
+    "question": "How does the paper connect evidence validation with hallucination reduction?",
+    "answer": "Filtering low-quality passages before generation is intended to reduce noisy or poorly grounded context that can contribute to unsupported answers.",
+    "type": "analytical"
+  },
+  {
+    "id": 59,
+    "question": "Why does the system need both retrieval control and answer verification?",
+    "answer": "Retrieval control addresses whether sufficient and relevant evidence is obtained, while answer verification checks whether the generated response actually matches that evidence.",
+    "type": "analytical"
+  },
+  {
+    "id": 60,
+    "question": "What is the overall evidence flow from a user query to a final answer?",
+    "answer": "The query is understood, retrieval is planned, evidence is retrieved and validated, context is refined, an answer is generated, and self-reflection determines whether it is accepted or retried.",
+    "type": "analytical"
+  },
+  {
+    "id": 61,
+    "question": "How does AC-RAG differ from the RAG (2020) system in adaptive retrieval?",
+    "answer": "The paper's comparison marks RAG (2020) as not supporting adaptive retrieval, while AC-RAG supports it.",
+    "type": "comparative"
+  },
+  {
+    "id": 62,
+    "question": "How does AC-RAG differ from RAG (2020) in evidence validation?",
+    "answer": "RAG (2020) is marked as not supporting evidence validation, while AC-RAG supports it.",
+    "type": "comparative"
+  },
+  {
+    "id": 63,
+    "question": "How does AC-RAG differ from RAG (2020) in self-reflection?",
+    "answer": "RAG (2020) is marked as not supporting self-reflection, while AC-RAG supports it.",
+    "type": "comparative"
+  },
+  {
+    "id": 64,
+    "question": "Which system in Table 1 is marked as partially supporting both dense retrieval and adaptive retrieval?",
+    "answer": "ReAct (2023).",
+    "type": "comparative"
+  },
+  {
+    "id": 65,
+    "question": "How does ReAct's adaptive retrieval support differ from AC-RAG's according to Table 1?",
+    "answer": "ReAct is marked as partially supporting adaptive retrieval, while AC-RAG is marked as fully supporting it.",
+    "type": "comparative"
+  },
+  {
+    "id": 66,
+    "question": "Which system is marked as supporting self-reflection but not dense retrieval in Table 1?",
+    "answer": "Reflexion (2023).",
+    "type": "comparative"
+  },
+  {
+    "id": 67,
+    "question": "How does Reflexion compare with AC-RAG on feedback support?",
+    "answer": "Reflexion is marked as partially supporting feedback, while AC-RAG is marked as fully supporting feedback.",
+    "type": "comparative"
+  },
+  {
+    "id": 68,
+    "question": "How does Agentic RAG (2025) compare with AC-RAG on adaptive retrieval?",
+    "answer": "Agentic RAG is marked as partial support, while AC-RAG is marked as full support.",
+    "type": "comparative"
+  },
+  {
+    "id": 69,
+    "question": "How does Agentic RAG (2025) compare with AC-RAG on evidence validation?",
+    "answer": "Agentic RAG is marked as not supporting evidence validation, while AC-RAG is marked as supporting it.",
+    "type": "comparative"
+  },
+  {
+    "id": 70,
+    "question": "Which system in the table is marked as supporting all eight listed architectural dimensions?",
+    "answer": "AC-RAG.",
+    "type": "comparative"
+  },
+  {
+    "id": 71,
+    "question": "What are the eight architectural dimensions used in Table 1?",
+    "answer": "Dense retrieval, adaptive retrieval, multi-agent, evidence validation, context refinement, self-reflection, feedback, and no fine-tuning.",
+    "type": "comparative"
+  },
+  {
+    "id": 72,
+    "question": "How does AC-RAG compare with DPR (2020) on adaptive retrieval and evidence validation?",
+    "answer": "DPR is marked as supporting neither, while AC-RAG is marked as supporting both.",
+    "type": "comparative"
+  },
+  {
+    "id": 73,
+    "question": "How does AC-RAG compare with FiD (2021) on context refinement?",
+    "answer": "FiD is marked as not supporting context refinement, while AC-RAG is marked as supporting it.",
+    "type": "comparative"
+  },
+  {
+    "id": 74,
+    "question": "How does AC-RAG compare with Toolformer (2023) on self-reflection?",
+    "answer": "Toolformer is marked as not supporting self-reflection, while AC-RAG is marked as supporting it.",
+    "type": "comparative"
+  },
+  {
+    "id": 75,
+    "question": "Which prior systems are marked as having no fine-tuning in Table 1?",
+    "answer": "RAG (2020), ReAct (2023), Reflexion (2023), Toolformer (2023), and Agentic RAG (2025).",
+    "type": "comparative"
+  },
+  {
+    "id": 76,
+    "question": "Which systems are marked as supporting dense retrieval but not adaptive retrieval?",
+    "answer": "RAG (2020), DPR (2020), FiD (2021), and Agentic RAG (2025) is marked partial rather than not supported, so the fully-not-supported set is RAG, DPR, and FiD.",
+    "type": "comparative"
+  },
+  {
+    "id": 77,
+    "question": "Which system is marked as partially supporting feedback but not self-reflection?",
+    "answer": "ReAct (2023) is marked as partial feedback and not self-reflection.",
+    "type": "comparative"
+  },
+  {
+    "id": 78,
+    "question": "How does the paper compare AC-RAG numerically with ReAct, Reflexion, and Agentic RAG?",
+    "answer": "It does not make a direct numerical comparison because those systems were evaluated on different datasets and/or measures; it uses qualitative architectural comparison instead.",
+    "type": "comparative"
+  },
+  {
+    "id": 79,
+    "question": "Why does the paper avoid direct numerical comparison with prior systems?",
+    "answer": "Because the prior systems were not evaluated on the same dataset and metrics.",
+    "type": "comparative"
+  },
+  {
+    "id": 80,
+    "question": "How does the paper position AC-RAG relative to the baseline RAG system?",
+    "answer": "The baseline uses fixed retrieval depth and lacks evidence validation and self-reflection, whereas AC-RAG adds adaptive retrieval and these control stages.",
+    "type": "comparative"
+  },
+  {
+    "id": 81,
+    "question": "What is the main architectural distinction between the baseline and AC-RAG in the experimental comparison?",
+    "answer": "The baseline retrieves a predetermined five passages for all queries and lacks evidence validation and self-reflection; AC-RAG uses adaptive retrieval and these additional control stages.",
+    "type": "comparative"
+  },
+  {
+    "id": 82,
+    "question": "How does AC-RAG compare with the baseline regarding retrieval depth?",
+    "answer": "The baseline uses a fixed depth of five passages, while AC-RAG dynamically chooses k between 4 and 12.",
+    "type": "comparative"
+  },
+  {
+    "id": 83,
+    "question": "How does AC-RAG compare with the baseline regarding post-generation checking?",
+    "answer": "AC-RAG performs self-reflection on generated responses, while the baseline lacks self-reflection.",
+    "type": "comparative"
+  },
+  {
+    "id": 84,
+    "question": "Which prior approach in the paper is explicitly described as combining reasoning steps with tool use?",
+    "answer": "ReAct.",
+    "type": "comparative"
+  },
+  {
+    "id": 85,
+    "question": "Which prior approach is described as using iterative verbal feedback across attempts?",
+    "answer": "Reflexion.",
+    "type": "comparative"
+  },
+  {
+    "id": 86,
+    "question": "According to Table 1, how many of the eight architectural dimensions does AC-RAG support?",
+    "answer": "All eight.",
+    "type": "table"
+  },
+  {
+    "id": 87,
+    "question": "According to Table 1, which systems support dense retrieval?",
+    "answer": "RAG (2020), DPR (2020), FiD (2021), ReAct (partially), Agentic RAG (2025), and AC-RAG.",
+    "type": "table"
+  },
+  {
+    "id": 88,
+    "question": "According to Table 1, which systems support adaptive retrieval fully?",
+    "answer": "AC-RAG.",
+    "type": "table"
+  },
+  {
+    "id": 89,
+    "question": "According to Table 1, which systems partially support adaptive retrieval?",
+    "answer": "ReAct (2023) and Agentic RAG (2025).",
+    "type": "table"
+  },
+  {
+    "id": 90,
+    "question": "According to Table 1, which systems have no support for adaptive retrieval?",
+    "answer": "RAG (2020), DPR (2020), FiD (2021), Reflexion (2023), and Toolformer (2023).",
+    "type": "table"
+  },
+  {
+    "id": 91,
+    "question": "According to Table 1, which systems support self-reflection?",
+    "answer": "Reflexion (2023) and AC-RAG.",
+    "type": "table"
+  },
+  {
+    "id": 92,
+    "question": "According to Table 1, which system partially supports self-reflection?",
+    "answer": "None; ReAct is marked not supported for self-reflection, while Reflexion and AC-RAG are supported.",
+    "type": "table"
+  },
+  {
+    "id": 93,
+    "question": "According to Table 1, which systems support feedback fully?",
+    "answer": "ReAct (2023), Reflexion is partial, and AC-RAG is full; therefore the fully supported systems are ReAct (2023) and AC-RAG.",
+    "type": "table"
+  },
+  {
+    "id": 94,
+    "question": "According to Table 1, which system has partial support for feedback besides AC-RAG?",
+    "answer": "ReAct (2023) and Reflexion (2023) are shown with partial feedback support.",
+    "type": "table"
+  },
+  {
+    "id": 95,
+    "question": "According to Table 1, which systems support evidence validation?",
+    "answer": "Only AC-RAG.",
+    "type": "table"
+  },
+  {
+    "id": 96,
+    "question": "According to Table 1, which systems support context refinement?",
+    "answer": "Only AC-RAG.",
+    "type": "table"
+  },
+  {
+    "id": 97,
+    "question": "According to Table 1, which systems support multi-agent architecture?",
+    "answer": "AC-RAG is marked as supporting it; Agentic RAG is marked partial.",
+    "type": "table"
+  },
+  {
+    "id": 98,
+    "question": "According to Table 1, which system is marked as partially supporting multi-agent architecture?",
+    "answer": "Agentic RAG (2025).",
+    "type": "table"
+  },
+  {
+    "id": 99,
+    "question": "According to Table 1, which systems are marked as not supporting multi-agent architecture?",
+    "answer": "RAG (2020), DPR (2020), FiD (2021), ReAct (2023), Reflexion (2023), and Toolformer (2023).",
+    "type": "table"
+  },
+  {
+    "id": 100,
+    "question": "According to Table 2, what is the retrieval range and evidence threshold together?",
+    "answer": "Retrieval k ranges from 4 to 12, and the evidence threshold is 0.65.",
+    "type": "table"
+  },
+  {
+    "id": 101,
+    "question": "According to Table 2, what are the generation and critic models?",
+    "answer": "GPT-4o for generation and o3-mini for the critic/self-reflection stage.",
+    "type": "table"
+  },
+  {
+    "id": 102,
+    "question": "According to Table 2, what are the maximum retrieval and reflection retries?",
+    "answer": "Three retrieval retries and three reflection retries.",
+    "type": "table"
+  },
+  {
+    "id": 103,
+    "question": "According to Table 3, which system has the higher faithfulness score in the paper's reported results?",
+    "answer": "AC-RAG, with 0.88 compared with 0.61 for baseline RAG.",
+    "type": "table"
+  },
+  {
+    "id": 104,
+    "question": "According to Table 3, which system has the higher context relevance score?",
+    "answer": "AC-RAG, with 0.86 compared with 0.64 for baseline RAG.",
+    "type": "table"
+  },
+  {
+    "id": 105,
+    "question": "According to Table 4, which ablation has the lowest reported faithfulness?",
+    "answer": "w/o Self-Reflection, with 0.73.",
+    "type": "table"
+  },
+  {
+    "id": 106,
+    "question": "What exact value is given as the evidence threshold?",
+    "answer": "0.65.",
+    "type": "numerical"
+  },
+  {
+    "id": 107,
+    "question": "What exact self-reflection score is required for acceptance?",
+    "answer": "4 out of 5.",
+    "type": "numerical"
+  },
+  {
+    "id": 108,
+    "question": "What is the minimum retrieval k listed?",
+    "answer": "4.",
+    "type": "numerical"
+  },
+  {
+    "id": 109,
+    "question": "What is the maximum retrieval k listed?",
+    "answer": "12.",
+    "type": "numerical"
+  },
+  {
+    "id": 110,
+    "question": "What is the fixed retrieval depth used by the baseline in the experimental comparison?",
+    "answer": "5 passages.",
+    "type": "numerical"
+  },
+  {
+    "id": 111,
+    "question": "What is the chunk size?",
+    "answer": "600 characters.",
+    "type": "numerical"
+  },
+  {
+    "id": 112,
+    "question": "What is the chunk overlap?",
+    "answer": "100 characters.",
+    "type": "numerical"
+  },
+  {
+    "id": 113,
+    "question": "How many reflection dimensions are scored?",
+    "answer": "5.",
+    "type": "numerical"
+  },
+  {
+    "id": 114,
+    "question": "How many dimensions are used in the architectural comparison table?",
+    "answer": "8.",
+    "type": "numerical"
+  },
+  {
+    "id": 115,
+    "question": "How many question-answer pairs are described in the paper's original evaluation?",
+    "answer": "50.",
+    "type": "numerical"
+  },
+  {
+    "id": 116,
+    "question": "What faithfulness score does the paper report for baseline RAG in Table 3?",
+    "answer": "0.61.",
+    "type": "numerical"
+  },
+  {
+    "id": 117,
+    "question": "What faithfulness score does the paper report for AC-RAG in Table 3?",
+    "answer": "0.88.",
+    "type": "numerical"
+  },
+  {
+    "id": 118,
+    "question": "What context relevance score does the paper report for baseline RAG in Table 3?",
+    "answer": "0.64.",
+    "type": "numerical"
+  },
+  {
+    "id": 119,
+    "question": "What context relevance score does the paper report for AC-RAG in Table 3?",
+    "answer": "0.86.",
+    "type": "numerical"
+  },
+  {
+    "id": 120,
+    "question": "What response accuracy score does the paper report for AC-RAG in Table 3?",
+    "answer": "0.87.",
+    "type": "numerical"
+  },
+  {
+    "id": 121,
+    "question": "What was AC-RAG's production latency after deployment in a real-world application?",
+    "answer": "Insufficient evidence in the document; no production deployment latency is reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 122,
+    "question": "How much did it cost to run each AC-RAG query in US dollars?",
+    "answer": "Insufficient evidence in the document; no per-query monetary cost is reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 123,
+    "question": "What percentage of users preferred AC-RAG over baseline RAG?",
+    "answer": "Insufficient evidence in the document; no user-preference study is reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 124,
+    "question": "How many GPUs were used to run the experiments?",
+    "answer": "Insufficient evidence in the document; GPU count is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 125,
+    "question": "What was the exact wall-clock training time for text-embedding-3-large?",
+    "answer": "Insufficient evidence in the document; training time is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 126,
+    "question": "How many documents were in the complete production corpus?",
+    "answer": "Insufficient evidence in the document; the total production corpus size is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 127,
+    "question": "What was the average number of tokens in every retrieved passage?",
+    "answer": "Insufficient evidence in the document; average retrieved-passage token count is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 128,
+    "question": "What was the exact precision, recall, and F1 score of the router?",
+    "answer": "Insufficient evidence in the document; router precision, recall, and F1 are not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 129,
+    "question": "What was the exact percentage reduction in hallucinations measured by a human evaluation?",
+    "answer": "Insufficient evidence in the document; no such human hallucination percentage is reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 130,
+    "question": "How many human annotators evaluated the 50 question-answer pairs?",
+    "answer": "Insufficient evidence in the document; the number of human annotators is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 131,
+    "question": "What was the confidence interval of the reported AC-RAG faithfulness score?",
+    "answer": "Insufficient evidence in the document; no confidence interval is reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 132,
+    "question": "What p-value proves that AC-RAG is statistically better than baseline RAG?",
+    "answer": "Insufficient evidence in the document; no statistical significance test or p-value is reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 133,
+    "question": "What is the exact recall@10 achieved by AC-RAG?",
+    "answer": "Insufficient evidence in the document; recall@10 is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 134,
+    "question": "What was the average number of retries per question in the original 50-question experiment?",
+    "answer": "Insufficient evidence in the document; an average retry count is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 135,
+    "question": "What percentage of unanswerable questions were correctly rejected by AC-RAG?",
+    "answer": "Insufficient evidence in the document; the paper does not report a percentage for unanswerable-question rejection.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 136,
+    "question": "What was the exact number of table questions among the 50 original evaluation questions?",
+    "answer": "Insufficient evidence in the document; only the categories are described, not their exact counts.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 137,
+    "question": "What was the exact number of analytical questions among the 50 original evaluation questions?",
+    "answer": "Insufficient evidence in the document; the exact category counts are not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 138,
+    "question": "What was the exact number of factual questions among the 50 original evaluation questions?",
+    "answer": "Insufficient evidence in the document; the exact category counts are not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 139,
+    "question": "Which cloud provider hosted the AC-RAG experiments?",
+    "answer": "Insufficient evidence in the document; no cloud provider is specified.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 140,
+    "question": "What operating system was used for the experiments?",
+    "answer": "Insufficient evidence in the document; the operating system is not specified.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 141,
+    "question": "What CPU model was used during evaluation?",
+    "answer": "Insufficient evidence in the document; the CPU model is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 142,
+    "question": "What was the maximum context-window token length of GPT-4o in the experiment?",
+    "answer": "Insufficient evidence in the document; the model context-window size is not specified as an experimental parameter.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 143,
+    "question": "What temperature value was used for GPT-4o generation?",
+    "answer": "Insufficient evidence in the document; generation temperature is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 144,
+    "question": "What exact prompt template was used by the critic model?",
+    "answer": "Insufficient evidence in the document; the critic prompt template is not provided.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 145,
+    "question": "What percentage of retrieved passages were removed by evidence validation?",
+    "answer": "Insufficient evidence in the document; the percentage of removed passages is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 146,
+    "question": "What was the exact average number of passages remaining after validation?",
+    "answer": "Insufficient evidence in the document; no average post-validation passage count is reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 147,
+    "question": "What exact latency overhead was caused by self-reflection alone?",
+    "answer": "Insufficient evidence in the document; component-level latency is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 148,
+    "question": "What exact improvement in answer faithfulness was statistically significant?",
+    "answer": "Insufficient evidence in the document; no statistical significance result is reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 149,
+    "question": "What was the exact percentage of queries that triggered query decomposition?",
+    "answer": "Insufficient evidence in the document; the percentage of decomposed queries is not reported.",
+    "type": "unanswerable"
+  },
+  {
+    "id": 150,
+    "question": "What exact percentage of figure questions required the vision-capable model?",
+    "answer": "Insufficient evidence in the document; no such percentage is reported.",
+    "type": "unanswerable"
+  }
+]

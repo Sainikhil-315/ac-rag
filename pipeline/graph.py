@@ -375,7 +375,7 @@ def run_pipeline(
             warnings.simplefilter("ignore", DeprecationWarning)
             from langchain_community.callbacks import get_openai_callback
             with get_openai_callback() as cb:
-                result = pipeline.invoke(state, config={"recursion_limit": 50})
+                result = pipeline.invoke(state, config={"recursion_limit": 100})
                 result = {
                     **result,
                     "token_usage": {

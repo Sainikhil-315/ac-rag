@@ -40,7 +40,7 @@ VECTORSTORE_BACKEND = "faiss"    # "faiss" | "chroma"
 LLM_PROVIDER = "openai"          # ← change this one line to switch the entire pipeline
 
 # ── LLM Models (per provider) ─────────────────────────────────────────────────
-OPENAI_LLM_MODEL    = "gpt-4o"
+OPENAI_LLM_MODEL    = "gpt-4o-mini"
 GOOGLE_LLM_MODEL    = "gemini-3.6-flash"   # fast, low-cost, strong reasoning
 # NOTE: same external-drift issue as GROQ_LLM_MODEL above — "gemini-2.0-flash" (the
 # original value here) returned a 404 model_not_found as of 2026-08-20; Google's own
@@ -114,7 +114,7 @@ SUMMARIZATION_MIN_VALID_PASSAGES = 1
 
 # ── Critic / Self-Reflection ──────────────────────────────────────────────────
 CRITIC_MIN_SCORE = 4    # all dimensions must be >= 4 (scale 1–5)
-MAX_RETRIES      = 3
+MAX_RETRIES      = 2
 
 # ── Faithfulness constraint (formal objective) ────────────────────────────────
 FAITHFULNESS_THRESHOLD = 0.80    # τ in: Faith(a, R(q,D)) ≥ τ

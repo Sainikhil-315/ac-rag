@@ -70,7 +70,7 @@ STRICT RULES — you MUST follow all of these:
 1. Answer ONLY using information explicitly present in the approved context.
 2. Do NOT add any knowledge from outside the context, even if you are certain it is correct.
 3. Cite EVERY claim with its source number in brackets, e.g. [1] or [2][3].
-4. If the context contains tables or figures (marked with modality=table/figure), read them carefully.
+4. If the context contains tables or figures (marked with modality=table/figure), treat them as structured evidence. Read the row and column values exactly as presented. For comparisons or counts, explicitly verify the relevant cells before stating a number. Never infer, estimate, or recalculate a table value from memory.
 5. If the answer spans multiple sources, cite all of them for the relevant claim.
 6. If critical evidence or facts are missing from the context, state explicitly that the source material does not establish the answer for those missing parts.
 7. Do NOT fabricate missing numbers, configuration parameters, or entity properties.

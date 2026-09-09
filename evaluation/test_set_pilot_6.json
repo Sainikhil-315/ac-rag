@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "question": "What are the two main failures of traditional RAG systems identified in the paper?",
+    "answer": "Fixed retrieval depth regardless of query complexity, and generated responses are not compared with the retrieved evidence.",
+    "type": "factual"
+  },
+  {
+    "id": 31,
+    "question": "Why does AC-RAG vary retrieval depth instead of using one fixed number of passages for every query?",
+    "answer": "Because simple queries need less context while complex queries may require more evidence; varying depth aims to reduce noise for simple queries and improve coverage for complex ones.",
+    "type": "analytical"
+  },
+  {
+    "id": 61,
+    "question": "How does AC-RAG differ from the RAG (2020) system in adaptive retrieval?",
+    "answer": "The paper's comparison marks RAG (2020) as not supporting adaptive retrieval, while AC-RAG supports it.",
+    "type": "comparative"
+  },
+  {
+    "id": 86,
+    "question": "According to Table 1, how many of the eight architectural dimensions does AC-RAG support?",
+    "answer": "All eight.",
+    "type": "table"
+  },
+  {
+    "id": 106,
+    "question": "What exact value is given as the evidence threshold?",
+    "answer": "0.65.",
+    "type": "numerical"
+  },
+  {
+    "id": 121,
+    "question": "What was AC-RAG's production latency after deployment in a real-world application?",
+    "answer": "Insufficient evidence in the document; no production deployment latency is reported.",
+    "type": "unanswerable"
+  }
+]
