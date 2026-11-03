@@ -2,9 +2,9 @@ export function Badge({ children, variant = "default", size = "sm", className = 
   const variants = {
     default:  "bg-surface-2 text-secondary border border-border",
     primary:  "bg-accent-bg text-accent-txt border border-accent-bdr",
-    success:  "bg-success-bg text-success border border-success/30",
-    warning:  "bg-warning-bg text-warning border border-warning/30",
-    danger:   "bg-danger-bg text-danger border border-danger/30",
+    success:  "bg-success-bg text-success border border-success-bdr",
+    warning:  "bg-warning-bg text-warning border border-warning-bdr",
+    danger:   "bg-danger-bg text-danger border border-danger-bdr",
     dark:     "bg-surface-2 text-text-faint border border-border",
   }
   const sizes = {
@@ -21,7 +21,7 @@ export function Badge({ children, variant = "default", size = "sm", className = 
 export function StatusDot({ status = "idle", size = "sm" }) {
   const color = {
     idle:   "bg-text-faint",
-    active: "bg-accent shadow-glow",
+    active: "bg-accent shadow-[0_0_0_3px_var(--c-accent-bg)]",
     done:   "bg-success",
     error:  "bg-danger",
   }[status] || "bg-text-faint"

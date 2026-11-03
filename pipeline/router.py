@@ -103,6 +103,10 @@ def route_after_validator(state: ACRagState) -> str:
         logger.warning("[Router] validator coverage failed, max retries or retrieval rounds hit → end_max_retries")
         return "end_max_retries"
 
+    if state.get("retry_reason") == "coverage_stagnant":
+        logger.warning("[Router] coverage improvement below MIN_COVERAGE_IMPROVEMENT → stopping retrieval early (end_max_retries)")
+        return "end_max_retries"
+
     # If missing requirements exist and we have retrieval budget left, run targeted retrieval
     if missing_reqs and retrieval_attempts < MAX_RETRIEVAL_ROUNDS:
         logger.info("[Router] validator coverage incomplete (missing %d reqs, attempt %d) → targeted_retrieval", len(missing_reqs), retrieval_attempts)
@@ -182,8 +186,13 @@ def route_after_critic(state: ACRagState) -> str:
         logger.info("[Router] critic format issue (retry %d) → generator", retry + 1)
         return "generator"
     elif reason in ("unsupported_claim", "coverage"):
-        if retrieval_attempts >= MAX_RETRIEVAL_ROUNDS:
-            logger.warning("[Router] MAX_RETRIEVAL_ROUNDS hit for %s retry → end_max_retries", reason)
+        # Bug fixed 2026-10-13: this branch only checked retrieval_attempts, never
+        # repair_attempts — confirmed on a real no_planner run where repair_attempts
+        # climbed to 7-8 (vs the intended cap of 2) because retrieval_attempts stayed
+        # under MAX_RETRIEVAL_ROUNDS=3 the whole time, so the loop rode the global
+        # MAX_TOTAL_CONTROL_STEPS=8 ceiling instead of stopping at MAX_GENERATION_REPAIRS.
+        if retrieval_attempts >= MAX_RETRIEVAL_ROUNDS or repair_attempts >= MAX_GENERATION_REPAIRS:
+            logger.warning("[Router] retrieval/repair cap hit for %s retry → end_max_retries", reason)
             return "end_max_retries"
         logger.info("[Router] critic %s issue (retry %d) → targeted_retrieval", reason, retry + 1)
         return "targeted_retrieval"

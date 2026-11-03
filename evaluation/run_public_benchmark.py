@@ -77,20 +77,57 @@ def _restore_index(had_backup: bool) -> None:
     logger.info("Restored real demo index from backup -> %s", index_path)
 
 
-def run() -> None:
+def _force_openai_provider():
+    """
+    Force this script's LLM calls onto OpenAI regardless of config/settings.py's
+    LLM_PROVIDER, to avoid Groq's free-tier 8000 TPM rate limit (root cause of the
+    2026-09-08 run erroring on 24/25 questions — not a pipeline logic bug).
+
+    Same binding issue documented in run_cross_provider.py: utils/llm_factory.py
+    does `from config.settings import LLM_PROVIDER, LLM_MODEL` — a bound copy at
+    import time — so patching config.settings alone does nothing; llm_factory's
+    own bound names must be patched directly. get_llm() is also @lru_cache'd with
+    no arguments from pipeline nodes, so the cache must be cleared too or a
+    previously-cached non-OpenAI client would keep being reused.
+    """
+    import utils.llm_factory as llm_factory
+    from config.settings import OPENAI_LLM_MODEL
+
+    original = (llm_factory.LLM_PROVIDER, llm_factory.LLM_MODEL)
+    llm_factory.LLM_PROVIDER = "openai"
+    llm_factory.LLM_MODEL = OPENAI_LLM_MODEL
+    llm_factory.get_llm.cache_clear()
+    return original
+
+
+def _restore_provider(original) -> None:
+    import utils.llm_factory as llm_factory
+    llm_factory.LLM_PROVIDER, llm_factory.LLM_MODEL = original
+    llm_factory.get_llm.cache_clear()
+
+
+def run(config_name: str = "full") -> None:
     from vectorstore.build import build_index
     from evaluation.runner import load_test_set, run_evaluation, save_results
+    from evaluation.ablation import ABLATION_CONFIGS, _SettingsPatch
 
     had_backup = _backup_index()
+    original_provider = _force_openai_provider()
+
+    cfg = next((c for c in ABLATION_CONFIGS if c["name"] == config_name), None)
+    if cfg is None:
+        raise ValueError(f"Unknown config '{config_name}'. Available: {[c['name'] for c in ABLATION_CONFIGS]}")
 
     try:
         logger.info("Building benchmark index from %s ...", BENCHMARK_DOC_DIR)
         vsm = build_index(BENCHMARK_DOC_DIR)
 
         test_cases = load_test_set(str(BENCHMARK_TEST_SET))
-        logger.info("Running evaluation on %d public benchmark questions...", len(test_cases))
-        results = run_evaluation(test_cases, vsm, config_name="public_benchmark")
-        paths = save_results(results, config_name="public_benchmark")
+        run_label = f"public_benchmark_{config_name}"
+        logger.info("Running evaluation on %d public benchmark questions (config=%s)...", len(test_cases), config_name)
+        with _SettingsPatch(cfg.get("overrides", {})):
+            results = run_evaluation(test_cases, vsm, config_name=run_label)
+        paths = save_results(results, config_name=run_label)
 
         # Separate answerable vs unanswerable scoring — a good "insufficient
         # information" answer on an unanswerable question is a WIN, not a failure.
@@ -123,7 +160,12 @@ def run() -> None:
 
     finally:
         _restore_index(had_backup)
+        _restore_provider(original_provider)
 
 
 if __name__ == "__main__":
-    run()
+    import argparse
+    parser = argparse.ArgumentParser(description="AC-RAG Public Benchmark Runner")
+    parser.add_argument("--config", default="full", help="Ablation config name to run (default: full)")
+    args = parser.parse_args()
+    run(config_name=args.config)

@@ -148,6 +148,24 @@ def evaluate_single(
             "metrics": metrics,
             "token_usage": state.get("token_usage"),
             "stage_logs": state.get("stage_logs", []),
+            # ── Evidence-driven control diagnostics (previously computed but discarded) ──
+            "evidence_requirements": state.get("evidence_requirements"),
+            "evidence_coverage": state.get("evidence_coverage"),
+            "missing_requirements": state.get("missing_requirements"),
+            "retry_reason": state.get("retry_reason"),
+            "critic_feedback": state.get("critic_feedback"),
+            "abstained": state.get("abstained"),
+            "evidence_confidence": state.get("evidence_confidence"),
+            "retrieval_attempts": state.get("retrieval_attempts", 0),
+            "repair_attempts": state.get("repair_attempts", 0),
+            "total_control_steps": state.get("total_control_steps", 0),
+            "claims": state.get("claims"),
+            "claim_verifications": state.get("claim_verifications"),
+            "contradictions": state.get("contradictions"),
+            "evidence_trace": state.get("evidence_trace"),
+            "retrieval_plan": state.get("retrieval_plan"),
+            "total_coverage": state.get("total_coverage"),
+            "refined_context": state.get("refined_context"),
         }
 
     except Exception as e:
@@ -163,6 +181,23 @@ def evaluate_single(
             "latency_seconds": elapsed,
             "metrics": {},
             "stage_logs": [],
+            "evidence_requirements": None,
+            "evidence_coverage": None,
+            "missing_requirements": None,
+            "retry_reason": None,
+            "critic_feedback": None,
+            "abstained": None,
+            "evidence_confidence": None,
+            "retrieval_attempts": None,
+            "repair_attempts": None,
+            "total_control_steps": None,
+            "claims": None,
+            "claim_verifications": None,
+            "contradictions": None,
+            "evidence_trace": None,
+            "retrieval_plan": None,
+            "total_coverage": None,
+            "refined_context": None,
         }
 
 
@@ -173,12 +208,37 @@ def run_evaluation(
     vsm: VectorStoreManager,
     config_name: str = "default",
 ) -> List[Dict[str, Any]]:
-    """Run evaluation for all test cases. Returns list of result dicts."""
+    """
+    Run evaluation for all test cases. Returns list of result dicts.
+
+    Writes each result to a JSONL progress file IMMEDIATELY as it completes
+    (not just at the end via save_results()) — a long run (N=150 takes ~1hr)
+    previously wrote nothing to disk until every question finished, so there
+    was no way to check progress mid-run and a crash at question 80/150 lost
+    everything. Tail the printed progress-file path to watch results land
+    live; it's cleaned up automatically once save_results() writes the final
+    combined JSON/CSV/summary for a fully completed run.
+    """
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    progress_path = RESULTS_DIR / f"progress_{config_name}_{_timestamp()}.jsonl"
+    logger.info("[Runner] Live progress → %s", progress_path)
+
     results = []
-    for i, case in enumerate(test_set, 1):
-        logger.info("[Runner] [%d/%d] %s", i, len(test_set), case.get("id", "?"))
-        result = evaluate_single(case, vsm, config_name)
-        results.append(result)
+    with open(progress_path, "a", encoding="utf-8") as pf:
+        for i, case in enumerate(test_set, 1):
+            logger.info("[Runner] [%d/%d] %s", i, len(test_set), case.get("id", "?"))
+            result = evaluate_single(case, vsm, config_name)
+            results.append(result)
+            pf.write(json.dumps(result, default=str) + "\n")
+            pf.flush()
+
+    # Full run completed cleanly — the final results_*.json from save_results()
+    # is the authoritative record, so the now-redundant progress file is removed.
+    try:
+        progress_path.unlink()
+    except OSError:
+        pass
+
     return results
 
 
@@ -231,9 +291,18 @@ def save_results(
                     row[f"critic_{k}"] = v
             flat_rows.append(row)
 
-        fieldnames = list(flat_rows[0].keys())
+        # Union of keys across ALL rows, not just the first — rows vary (e.g. an
+        # abstained/errored row has no critic_* or metric_* keys at all), and
+        # DictWriter raises if any row has a key missing from `fieldnames`.
+        fieldnames: List[str] = []
+        seen = set()
+        for row in flat_rows:
+            for k in row.keys():
+                if k not in seen:
+                    seen.add(k)
+                    fieldnames.append(k)
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer = csv.DictWriter(f, fieldnames=fieldnames, restval="")
             writer.writeheader()
             writer.writerows(flat_rows)
 
@@ -259,10 +328,33 @@ def _compute_summary(
     for r in results:
         metric_keys.update((r.get("metrics") or {}).keys())
 
+    # Split errors into categories so "critic rejected but metrics looked fine"
+    # (max-retries exhausted, still has metrics) is never silently averaged in
+    # with genuine infra/exception failures (empty metrics, excluded below).
+    max_retries_rows = [
+        r for r in results
+        if r.get("error") and "max retries" in str(r.get("error", "")).lower()
+    ]
+    other_error_rows = [
+        r for r in results
+        if r.get("error") and r not in max_retries_rows
+    ]
+
+    def _mean_composite(rows: List[Dict[str, Any]]) -> Optional[float]:
+        vals = [r["metrics"]["composite"] for r in rows if r.get("metrics", {}).get("composite") is not None]
+        return round(float(np.mean(vals)), 4) if vals else None
+
     agg: Dict[str, Any] = {
         "config": config_name,
         "total_queries": len(results),
         "errors": sum(1 for r in results if r.get("error")),
+        "errors_max_retries_exhausted": len(max_retries_rows),
+        "errors_other": len(other_error_rows),
+        "mean_composite_max_retries_exhausted": _mean_composite(max_retries_rows),
+        "mean_composite_other_errors": _mean_composite(other_error_rows),
+        "mean_composite_clean": _mean_composite(
+            [r for r in results if not r.get("error")]
+        ),
         "critic_pass_rate": round(
             sum(1 for r in results if r.get("critic_passed")) / max(len(results), 1), 4
         ),

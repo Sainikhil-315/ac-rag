@@ -108,72 +108,133 @@ class AskRequest(BaseModel):
 
 # ── Helper: extract structured output from each node's state delta ─────────────
 
+def _doc_preview(d: dict) -> dict:
+    """Trim one retrieved-doc dict to display-friendly size, keeping every field name."""
+    content = d.get("content", "") if isinstance(d, dict) else ""
+    return {
+        "chunk_id":  d.get("chunk_id"),
+        "source":    d.get("source"),
+        "page":      d.get("page"),
+        "section":   d.get("section_heading") or d.get("section"),
+        "modality":  d.get("modality"),
+        "score":     d.get("score"),
+        "content":   (content[:280] + "…") if len(content) > 280 else content,
+    }
+
+
 def _extract_output(node_name: str, state: dict) -> dict:
-    """Return a display-friendly output dict for the given node."""
+    """
+    Return the FULL per-node state slice for display — this is a research/debug
+    tool (inspecting exactly what the pipeline did for a query), not an end-user
+    product, so every field the pipeline actually computes should reach the UI
+    rather than a curated summary. state_acc already contains every upstream
+    node's delta by the time any mapped node fires (see the merge loop in ask()),
+    so e.g. the "critic" branch below can also surface claim/contradiction data
+    even though claim_extractor/claim_verifier/contradiction_detector aren't
+    separately mapped agents.
+    """
     if node_name == "query_analyzer":
         return {
-            "rewritten_query":  state.get("rewritten_query"),
-            "intent":           state.get("intent"),
-            "complexity_score": state.get("complexity_score"),
+            "rewritten_query":       state.get("rewritten_query"),
+            "intent":                state.get("intent"),
+            "complexity_score":      state.get("complexity_score"),
+            "decomposed_queries":    state.get("decomposed_queries"),
+            "evidence_requirements": state.get("evidence_requirements"),
         }
     if node_name == "retriever":
-        # retriever completes the retrieval_planning agent; show plan + retrieved docs
+        # retriever completes the retrieval_planning agent; show the full plan,
+        # the retrieved passages, and any targeted-retrieval rounds that ran
+        # since (targeted_retrieval loops back through validator, not through
+        # retriever again, but its deltas are already merged into state here).
         plan = state.get("retrieval_plan") or {}
         docs = state.get("retrieved_docs") or []
         return {
-            "k":              plan.get("k"),
-            "depth":          plan.get("retrieval_depth"),
-            "modality":       plan.get("modality_filter"),
-            "multi_query":    plan.get("use_multi_query"),
+            "plan": {
+                "k":              plan.get("k"),
+                "fetch_k":        plan.get("fetch_k"),
+                "lambda_mult":    plan.get("lambda_mult"),
+                "modality_filter": plan.get("modality_filter"),
+                "use_multi_query": plan.get("use_multi_query"),
+                "retrieval_depth": plan.get("retrieval_depth"),
+                "strategy":       plan.get("strategy"),
+                "lexical_weight": plan.get("lexical_weight"),
+                "dense_weight":   plan.get("dense_weight"),
+            },
             "retrieved_count": len(docs),
+            "retrieved_docs":  [_doc_preview(d) for d in docs if isinstance(d, dict)],
         }
     if node_name == "validator":
-        docs   = state.get("scored_docs") or []
-        passed = state.get("validation_passed")
-        scores = [round(d.get("score", 0), 2) for d in docs if isinstance(d, dict)]
-        return {"scored_count": len(docs), "validation_passed": passed, "scores": scores}
+        docs    = state.get("scored_docs") or []
+        return {
+            "validation_passed":     state.get("validation_passed"),
+            "total_coverage":        state.get("total_coverage"),
+            "evidence_requirements": state.get("evidence_requirements"),
+            "evidence_coverage":     state.get("evidence_coverage"),
+            "missing_requirements":  state.get("missing_requirements"),
+            "targeted_queries":      state.get("targeted_queries"),
+            "retrieval_attempts":    state.get("retrieval_attempts"),
+            "scored_docs":           [_doc_preview(d) for d in docs if isinstance(d, dict)],
+        }
     if node_name == "context_refiner":
         ctx = state.get("refined_context") or ""
         return {
             "context_length": len(ctx),
-            "preview":        (ctx[:120] + "…") if len(ctx) > 120 else ctx,
+            "context_full":   ctx,
         }
     if node_name == "generator":
-        ans = state.get("answer") or ""
         return {
-            "answer_length": len(ans),
-            "preview":       (ans[:120] + "…") if len(ans) > 120 else ans,
+            "answer":                state.get("answer"),
+            "is_answerable":         state.get("is_answerable"),
+            "answer_with_attribution": state.get("answer_with_attribution"),
         }
     if node_name == "critic":
-        scores = state.get("critic_scores") or {}
-        passed = state.get("critic_passed")
-        return {"scores": scores, "passed": passed}
+        return {
+            "critic_scores":         state.get("critic_scores"),
+            "critic_passed":         state.get("critic_passed"),
+            "critic_feedback":       state.get("critic_feedback"),
+            "retry_reason":          state.get("retry_reason"),
+            "abstained":             state.get("abstained"),
+            "evidence_confidence":   state.get("evidence_confidence"),
+            "evidence_trace":        state.get("evidence_trace"),
+            "claims":                state.get("claims"),
+            "claim_verifications":   state.get("claim_verifications"),
+            "contradictions":        state.get("contradictions"),
+            "retry_count":           state.get("retry_count"),
+            "retrieval_attempts":    state.get("retrieval_attempts"),
+            "repair_attempts":       state.get("repair_attempts"),
+            "total_control_steps":   state.get("total_control_steps"),
+        }
     return {}
 
 
 def _make_summary(node_name: str, output: dict) -> str:
     """Return a one-line human-readable summary for each node's output."""
     if node_name == "query_analyzer":
+        n_req = len(output.get("evidence_requirements") or [])
         return (
             f"intent: {output.get('intent', '?')} · "
-            f"complexity: {output.get('complexity_score', '?')}"
+            f"complexity: {output.get('complexity_score', '?')} · {n_req} requirement(s)"
         )
     if node_name == "retriever":
+        plan = output.get("plan") or {}
         return (
-            f"k={output.get('k', '?')} · modality={output.get('modality', '?')} · "
+            f"k={plan.get('k', '?')} · strategy={plan.get('strategy', '?')} · "
             f"{output.get('retrieved_count', '?')} passages retrieved"
         )
     if node_name == "validator":
         p = "passed" if output.get("validation_passed") else "failed"
-        return f"validation {p} · {output.get('scored_count', '?')} scored"
+        cov = output.get("total_coverage")
+        cov_s = f"{cov:.2f}" if isinstance(cov, (int, float)) else "?"
+        return f"validation {p} · coverage {cov_s} · {len(output.get('scored_docs') or [])} scored"
     if node_name == "context_refiner":
         return f"context: {output.get('context_length', '?')} chars"
     if node_name == "generator":
-        return f"answer: {output.get('answer_length', '?')} chars"
+        ans = output.get("answer") or ""
+        return f"answer: {len(ans)} chars"
     if node_name == "critic":
-        scores  = output.get("scores") or {}
+        scores  = output.get("critic_scores") or {}
         overall = scores.get("overall", "?")
-        passed  = "PASS" if output.get("passed") else "FAIL"
+        passed  = "PASS" if output.get("critic_passed") else ("ABSTAINED" if output.get("abstained") else "FAIL")
         return f"overall: {overall} · {passed}"
     return ""
 
@@ -330,72 +391,87 @@ async def ask(req: AskRequest):
         # ── Thread worker: streams per-node events into the queue ──────────
         def _run():
             from pipeline.state import initial_state
+            # Previously untracked: this streaming path called pipeline.stream()
+            # directly, bypassing the get_openai_callback() wrapper that
+            # pipeline/graph.py::run_pipeline() uses for the batch/eval path —
+            # so the live UI had zero cost visibility. Only tracks OpenAI calls
+            # (same limitation as the eval harness); no-ops for other providers.
+            from langchain_community.callbacks import get_openai_callback
 
             state_acc: dict = {}
             prev_time = time.monotonic()
 
             try:
                 start_state = initial_state(query, conversation_history=conversation_history)
-                for chunk in pipeline.stream(start_state, stream_mode="updates"):
-                    t_now       = time.monotonic()
-                    duration_ms = max(1, round((t_now - prev_time) * 1000))
-                    prev_time   = t_now
+                with get_openai_callback() as cb:
+                    for chunk in pipeline.stream(start_state, stream_mode="updates"):
+                        t_now       = time.monotonic()
+                        duration_ms = max(1, round((t_now - prev_time) * 1000))
+                        prev_time   = t_now
 
-                    for node_name, delta in chunk.items():
-                        # Merge delta into accumulated state
-                        if isinstance(delta, dict):
-                            state_acc.update(delta)
+                        for node_name, delta in chunk.items():
+                            # Merge delta into accumulated state
+                            if isinstance(delta, dict):
+                                state_acc.update(delta)
 
-                        # Entry router → emit route metadata + start first RAG agent
-                        if node_name == "entry_router":
-                            route = state_acc.get("route") or "rag"
-                            is_rag = route == "rag"
-                            loop.call_soon_threadsafe(q.put_nowait, {
-                                "type":       "start",
-                                "route":      route,
-                                # Only send meaningful metadata for RAG route;
-                                # unknown queries have no intent/complexity/rewrite.
-                                "intent":     state_acc.get("intent") if is_rag else None,
-                                "complexity": round(float(state_acc.get("complexity_score") or 0.3), 2) if is_rag else None,
-                                "rewritten":  state_acc.get("rewritten_query") if is_rag else None,
-                                "retries":    state_acc.get("retry_count") or 0,
-                            })
-                            if is_rag:
+                            # Entry router → emit route metadata + start first RAG agent
+                            if node_name == "entry_router":
+                                route = state_acc.get("route") or "rag"
+                                is_rag = route == "rag"
                                 loop.call_soon_threadsafe(q.put_nowait, {
-                                    "type":  "agent_start",
-                                    "agent": "query_understanding",
+                                    "type":       "start",
+                                    "route":      route,
+                                    # Only send meaningful metadata for RAG route;
+                                    # unknown queries have no intent/complexity/rewrite.
+                                    "intent":     state_acc.get("intent") if is_rag else None,
+                                    "complexity": round(float(state_acc.get("complexity_score") or 0.3), 2) if is_rag else None,
+                                    "rewritten":  state_acc.get("rewritten_query") if is_rag else None,
+                                    "retries":    state_acc.get("retry_count") or 0,
                                 })
-
-                        # retrieval_planner → part of retrieval_planning agent;
-                        # query_analyzer already fired agent_start: retrieval_planning.
-                        # retriever node will complete it (agent_done) after KB access.
-                        elif node_name == "retrieval_planner":
-                            pass  # no additional UI event needed
-
-                        # Mapped RAG agents → emit agent_done + start next
-                        elif node_name in NODE_TO_AGENT:
-                            agent_id = NODE_TO_AGENT[node_name]
-                            output   = _extract_output(node_name, state_acc)
-                            summary  = _make_summary(node_name, output)
-
-                            loop.call_soon_threadsafe(q.put_nowait, {
-                                "type":        "agent_done",
-                                "agent":       agent_id,
-                                "output":      output,
-                                "summary":     summary,
-                                "duration_ms": duration_ms,
-                            })
-
-                            # Kick off the next agent in sequence
-                            try:
-                                idx = RAG_SEQUENCE.index(agent_id)
-                                if idx + 1 < len(RAG_SEQUENCE):
+                                if is_rag:
                                     loop.call_soon_threadsafe(q.put_nowait, {
                                         "type":  "agent_start",
-                                        "agent": RAG_SEQUENCE[idx + 1],
+                                        "agent": "query_understanding",
                                     })
-                            except ValueError:
-                                pass
+
+                            # retrieval_planner → part of retrieval_planning agent;
+                            # query_analyzer already fired agent_start: retrieval_planning.
+                            # retriever node will complete it (agent_done) after KB access.
+                            elif node_name == "retrieval_planner":
+                                pass  # no additional UI event needed
+
+                            # Mapped RAG agents → emit agent_done + start next
+                            elif node_name in NODE_TO_AGENT:
+                                agent_id = NODE_TO_AGENT[node_name]
+                                output   = _extract_output(node_name, state_acc)
+                                summary  = _make_summary(node_name, output)
+
+                                loop.call_soon_threadsafe(q.put_nowait, {
+                                    "type":        "agent_done",
+                                    "agent":       agent_id,
+                                    "output":      output,
+                                    "summary":     summary,
+                                    "duration_ms": duration_ms,
+                                })
+
+                                # Kick off the next agent in sequence
+                                try:
+                                    idx = RAG_SEQUENCE.index(agent_id)
+                                    if idx + 1 < len(RAG_SEQUENCE):
+                                        loop.call_soon_threadsafe(q.put_nowait, {
+                                            "type":  "agent_start",
+                                            "agent": RAG_SEQUENCE[idx + 1],
+                                        })
+                                except ValueError:
+                                    pass
+
+                    state_acc["token_usage"] = {
+                        "total_cost_usd": round(cb.total_cost, 6),
+                        "total_tokens":   cb.total_tokens,
+                        "prompt_tokens":  cb.prompt_tokens,
+                        "completion_tokens": cb.completion_tokens,
+                        "llm_calls":      cb.successful_requests,
+                    }
 
                 loop.call_soon_threadsafe(q.put_nowait, {"_done": state_acc})
 
@@ -444,6 +520,10 @@ async def ask(req: AskRequest):
         stage_logs = result_state.get("stage_logs") or []
         if stage_logs:
             yield f"data: {json.dumps({'type': 'trace', 'data': stage_logs})}\n\n"
+
+        token_usage = result_state.get("token_usage")
+        if token_usage:
+            yield f"data: {json.dumps({'type': 'cost', 'data': token_usage})}\n\n"
 
         yield f"data: {json.dumps({'type': 'done', 'error': result_state.get('error')})}\n\n"
 

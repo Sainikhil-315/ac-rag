@@ -4,9 +4,9 @@ const base = "inline-flex items-center justify-center rounded-lg text-sm font-me
 
 const variants = {
   primary: "bg-accent text-white hover:bg-accent-hover shadow-sm",
-  secondary: "bg-surface border border-border text-primary hover:bg-surface-2",
+  secondary: "bg-surface border border-border text-text hover:bg-surface-2",
   ghost: "text-secondary hover:bg-surface-2 border border-transparent hover:border-border",
-  danger: "bg-danger text-white hover:bg-danger/90",
+  danger: "bg-danger-bg text-danger border border-danger-bdr hover:bg-danger hover:text-white",
   accent: "bg-accent text-white hover:bg-accent-hover",
 }
 

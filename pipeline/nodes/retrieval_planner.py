@@ -47,12 +47,40 @@ def _rule_based_plan(complexity: float, intent: str, requirements=None) -> Retri
     lexical_weight = 0.5
     dense_weight = 0.5
 
+    # Derive modality_filter from evidence_requirements' expected_modality (set by
+    # query_analyzer with real context) rather than naive keyword presence in the
+    # query text — fixes a real case where "how are figures made searchable" set
+    # modality_filter="figure" purely because the word "figure" appeared, even
+    # though the requirement's own expected_modality was "text" (the answer is a
+    # text description of a process, not figure content itself). Only used when
+    # requirements unanimously agree on a non-"all" modality — mixed/absent stays "all".
+    modality_filter = "all"
+    if requirements:
+        expected_modalities = {
+            (r.get("expected_modality") or "all").lower()
+            for r in requirements if isinstance(r, dict)
+        } - {"all"}
+        if len(expected_modalities) == 1:
+            modality_filter = expected_modalities.pop()
+
     if requirements:
         req_types = [r.get("requirement_type") for r in requirements if isinstance(r, dict)]
-        if any(t in ("numeric", "value", "procedure") for t in req_types):
+        # Bug fixed 2026-10-12: "procedure" was grouped with numeric/value under
+        # the same lexical-weight boost — confirmed on a real case ("how are
+        # figures made searchable") where the answer ("a vision-capable model
+        # produces textual descriptions...") shares almost no exact wording with
+        # the question, so boosting lexical/BM25 weight actively hurt recall.
+        # numeric/value lookups genuinely need exact keyword/number matching;
+        # procedure descriptions are conceptual/paraphrased and need dense
+        # semantic matching more, not less — so it no longer gets the lexical boost.
+        if any(t in ("numeric", "value") for t in req_types):
             strategy = "hybrid"
             lexical_weight = 0.6
             dense_weight = 0.4
+        elif any(t == "procedure" for t in req_types):
+            strategy = "hybrid"
+            lexical_weight = 0.35
+            dense_weight = 0.65
 
     if complexity < 0.4:
         k = RETRIEVAL_K_MIN          # 4 — simple query, few passages needed
@@ -81,7 +109,7 @@ def _rule_based_plan(complexity: float, intent: str, requirements=None) -> Retri
         k=k,
         fetch_k=k * MMR_FETCH_K_MULTIPLIER,
         lambda_mult=lambda_mult,
-        modality_filter="all",
+        modality_filter=modality_filter,
         use_multi_query=multi_query,
         retrieval_depth=depth,
         strategy=strategy,
@@ -173,11 +201,16 @@ def _llm_refine_plan(plan: RetrievalPlan, state: ACRagState) -> RetrievalPlan:
             refinement.modality_filter, refinement.strategy, refinement.k_override, refinement.override_reason
         )
 
-        raw_modality = _sanitize_modality(
-            state.get("rewritten_query") or state["query"],
-            refinement.modality_filter,
-        )
-        plan["modality_filter"] = raw_modality
+        # Only let the LLM's keyword-driven modality guess override the plan when
+        # the rule-based pass didn't already derive one from evidence_requirements'
+        # expected_modality — that signal has real context the LLM's simple
+        # "does the query mention this word" heuristic doesn't (see _rule_based_plan).
+        if plan.get("modality_filter", "all") == "all":
+            raw_modality = _sanitize_modality(
+                state.get("rewritten_query") or state["query"],
+                refinement.modality_filter,
+            )
+            plan["modality_filter"] = raw_modality
         plan["strategy"] = refinement.strategy
         plan["k"] = refinement.k_override
         plan["fetch_k"] = refinement.k_override * MMR_FETCH_K_MULTIPLIER

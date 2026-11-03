@@ -52,16 +52,33 @@ def _rerank(docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 # ── Step 2: Semantic deduplication ────────────────────────────────────────────
 
-def _deduplicate(docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _deduplicate(
+    docs: List[Dict[str, Any]],
+    protect_keywords: List[str] = None,
+) -> List[Dict[str, Any]]:
     """
     Remove semantically redundant passages.
     Greedily keep each passage unless it is too similar to an already-kept one.
     The higher-scored passage (first after re-rank) is always kept.
+
+    Bug fixed 2026-10-12: cosine similarity on whole passages conflates "same
+    topic/structure" with "same information" — confirmed on a real case where
+    two chunks both describe the pipeline stage-by-stage (0.86 similarity, just
+    over threshold) but only ONE of them actually names the five self-reflection
+    dimensions the query asked about; the other only says "quality dimensions"
+    generically. Dedup dropped the one with the actual answer, so the generator
+    never saw it and correctly-but-wrongly said "insufficient information".
+    Fix: a candidate is never dropped as redundant if it contains an
+    evidence-requirement keyword that the chunk it would be deduped against
+    does NOT contain — a near-duplicate that is the ONLY source of a specific
+    required fact is not actually redundant, whatever its cosine score says.
     """
     if len(docs) <= 1:
         return docs
 
     texts = [doc["content"] for doc in docs]
+    lowered = [t.lower() for t in texts]
+    kws = [k.lower() for k in (protect_keywords or []) if k.strip()]
 
     try:
         sim_matrix = pairwise_cosine_matrix(texts)
@@ -74,6 +91,14 @@ def _deduplicate(docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         redundant = False
         for j in kept_indices:
             if sim_matrix[i, j] > DEDUP_THRESHOLD:
+                unique_kws = [kw for kw in kws if kw in lowered[i] and kw not in lowered[j]]
+                if unique_kws:
+                    logger.debug(
+                        "[ContextRefiner] Keeping chunk %s despite sim=%.3f with %s — "
+                        "uniquely contains required keyword(s) %s",
+                        docs[i].get("chunk_id", i), sim_matrix[i, j], docs[j].get("chunk_id", j), unique_kws,
+                    )
+                    continue
                 logger.debug(
                     "[ContextRefiner] Dropping chunk %s (sim=%.3f with chunk %s)",
                     docs[i].get("chunk_id", i), sim_matrix[i, j], docs[j].get("chunk_id", j)
@@ -257,8 +282,14 @@ def context_refiner_node(state: ACRagState) -> ACRagState:
         ranked = _rerank(docs)
         logger.info("[ContextRefiner] Re-ranked %d passages by score", len(ranked))
 
-        # Step 2: Semantic dedup
-        deduped = _deduplicate(ranked)
+        # Step 2: Semantic dedup — protect keywords from evidence_requirements so a
+        # near-duplicate chunk isn't dropped when it's the only one naming a
+        # specific required fact (see _deduplicate docstring for the real case this fixes).
+        protect_keywords = [
+            kw for req in (state.get("evidence_requirements") or [])
+            for kw in (req.get("keywords") or [])
+        ]
+        deduped = _deduplicate(ranked, protect_keywords=protect_keywords)
         logger.info("[ContextRefiner] After dedup: %d passages", len(deduped))
 
         # Step 3: Compress if needed

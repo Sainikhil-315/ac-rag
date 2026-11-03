@@ -1,0 +1,32 @@
+[
+  {
+    "id": 126,
+    "question": "Why does the model use multiple attention heads instead of a single attention function over the full model dimension?",
+    "answer": "Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions simultaneously. A single attention head, with its averaging, would inhibit this, since one head alone would have to compromise across all these different types of relationships at once, whereas multiple heads let the model capture different kinds of relationships in parallel.",
+    "type": "explanation"
+  },
+  {
+    "id": 127,
+    "question": "Why is the scaling factor 1/sqrt(d_k) applied in the dot-product attention computation?",
+    "answer": "The scaling factor 1/sqrt(d_k) is used because for large values of d_k, the dot products between queries and keys grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients. Scaling by 1/sqrt(d_k) counteracts this effect, keeping the softmax in a range with more useful gradients for training.",
+    "type": "explanation"
+  },
+  {
+    "id": 128,
+    "question": "What is the purpose of positional encoding in the Transformer, and what functions are used to generate it?",
+    "answer": "Since the Transformer contains no recurrence or convolution, positional encodings are added to the input embeddings to give the model information about the relative or absolute position of tokens in the sequence. The paper uses sine and cosine functions of different frequencies for this purpose, chosen because they allow the model to extrapolate to sequence lengths longer than those seen during training and let the model easily learn to attend by relative position.",
+    "type": "explanation"
+  },
+  {
+    "id": 129,
+    "question": "What are the three distinct ways attention is used within the Transformer's encoder-decoder architecture?",
+    "answer": "Attention is used in three ways: (1) encoder self-attention, where each position in the encoder attends to all positions in the previous encoder layer; (2) decoder self-attention, where each position attends to all positions in the decoder up to and including that position (masked to preserve the auto-regressive property); and (3) encoder-decoder attention, where queries come from the decoder layer and the keys and values come from the encoder's output, allowing every position in the decoder to attend over all positions in the input sequence.",
+    "type": "explanation"
+  },
+  {
+    "id": 130,
+    "question": "What inference-time decoding settings did the authors use, and why did they apply a length penalty?",
+    "answer": "At inference time, the authors used beam search with a beam size of 4 and a length penalty with alpha = 0.6. The length penalty was applied to prevent the beam search from favoring disproportionately short translations, since without it the search would tend to terminate sequences too early.",
+    "type": "explanation"
+  }
+]

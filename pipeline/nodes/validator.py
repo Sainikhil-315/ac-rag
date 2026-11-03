@@ -21,6 +21,7 @@ from config.settings import (
     MIN_VALID_PASSAGES,
     COVERAGE_THRESHOLD,
     CRITICAL_COVERAGE_THRESHOLD,
+    MIN_COVERAGE_IMPROVEMENT,
     SUMMARIZATION_SCORE_THRESHOLD,
     SUMMARIZATION_MIN_VALID_PASSAGES,
     USE_VALIDATOR,
@@ -103,15 +104,21 @@ def _evaluate_requirement_support(
             elif lexical_match == 1.0:
                 combined = max(combined, 0.75)
         elif req_type == "table" or expected_modality == "table":
-            if doc_modality == "table" or "table" in content_lower or "table" in meta:
-                combined = max(0.80, (0.5 * sem_score + 0.5 * lexical_match) * 1.3)
-            else:
-                combined = (0.5 * sem_score + 0.5 * lexical_match) * 0.7
+            # Bug fixed 2026-10-12: the old `max(0.80, ...)` floor gave ANY
+            # table-modality chunk at least 0.80 regardless of whether it was
+            # the RIGHT table — confirmed on a real case where a hyperparameter
+            # config table scored 0.85 "SUPPORTED" for a question about an
+            # entirely different ablation-results table, because it was merely
+            # *a* table. The boost now only amplifies genuine semantic/lexical
+            # relevance; it no longer rubber-stamps "is a table" as "is relevant".
+            base = 0.5 * sem_score + 0.5 * lexical_match
+            is_table = doc_modality == "table" or "table" in content_lower or "table" in meta
+            combined = min(1.0, base * 1.3) if is_table else base * 0.7
         elif req_type == "figure" or expected_modality == "figure":
-            if doc_modality == "figure" or "figure" in content_lower or "caption" in content_lower:
-                combined = max(0.80, (0.5 * sem_score + 0.5 * lexical_match) * 1.3)
-            else:
-                combined = (0.5 * sem_score + 0.5 * lexical_match) * 0.7
+            # Same fix as the table branch above, same reasoning.
+            base = 0.5 * sem_score + 0.5 * lexical_match
+            is_figure = doc_modality == "figure" or "figure" in content_lower or "caption" in content_lower
+            combined = min(1.0, base * 1.3) if is_figure else base * 0.7
         else:
             combined = 0.6 * sem_score + 0.4 * lexical_match + exact_value_boost
 
@@ -215,10 +222,21 @@ def validator_node(state: ACRagState) -> ACRagState:
             total_weight += weight
             weighted_score_sum += weight * score
 
-            if priority == "critical" and (status != "SUPPORTED" or score < score_threshold):
+            # Critical requirements are held to CRITICAL_COVERAGE_THRESHOLD (a stricter
+            # bar than the generic score_threshold used for status classification) —
+            # being SUPPORTED at a merely-passing score is not enough for a critical item.
+            critical_thresh = score_threshold if is_summarization else CRITICAL_COVERAGE_THRESHOLD
+            failed_critical_bar = priority == "critical" and (status != "SUPPORTED" or score < critical_thresh)
+            if failed_critical_bar:
                 critical_passed = False
 
-            if status in ("MISSING", "PARTIAL", "CONTRADICTED") or score < score_threshold:
+            # A critical requirement that clears the lenient score_threshold (so it
+            # reads as SUPPORTED) but misses the stricter critical_thresh must still
+            # go on the missing list — otherwise targeted_retrieval has nothing to
+            # search for, the next round can't possibly improve coverage, and the
+            # stagnation check (MIN_COVERAGE_IMPROVEMENT) kills the query without ever
+            # having tried to find better evidence for it.
+            if status in ("MISSING", "PARTIAL", "CONTRADICTED") or score < score_threshold or failed_critical_bar:
                 missing_req_ids.append(req["id"])
 
             updated_req = {
@@ -250,27 +268,51 @@ def validator_node(state: ACRagState) -> ACRagState:
         # A CRITICAL requirement must NEVER pass just because overall similarity or passage count is high.
         validation_passed = critical_passed and (total_coverage >= target_thresh or passing_doc_count >= min_passages)
 
+        # Adaptive budget conservation: if a prior targeted-retrieval round already ran
+        # (retrieval_attempts > 0 coming into this validation) and coverage barely moved,
+        # further retrieval rounds are unlikely to help — stop spending control-step
+        # budget on a stagnant retrieval loop rather than always exhausting MAX_RETRIEVAL_ROUNDS.
+        prev_coverage = state.get("total_coverage")
+        coverage_improvement = (total_coverage - prev_coverage) if prev_coverage is not None else None
+        retrieval_attempts_in = state.get("retrieval_attempts", 0)
+        # Require stagnation across at least 2 completed retrieval rounds (not just 1)
+        # before giving up early — a single round finding little new evidence doesn't
+        # mean the next one won't; this only short-circuits a loop that's reliably
+        # going nowhere, so it doesn't trade away answer attempts for budget savings.
+        coverage_stagnant = (
+            not validation_passed
+            and retrieval_attempts_in >= 2
+            and coverage_improvement is not None
+            and coverage_improvement < MIN_COVERAGE_IMPROVEMENT
+        )
+
         logger.info(
-            "[EvidenceCoverageEngine] Coverage: %.2f (thresh: %.2f, passing_docs: %d/%d) | valid=%s",
-            total_coverage, target_thresh, passing_doc_count, min_passages, validation_passed
+            "[EvidenceCoverageEngine] Coverage: %.2f (thresh: %.2f, passing_docs: %d/%d) | valid=%s | stagnant=%s",
+            total_coverage, target_thresh, passing_doc_count, min_passages, validation_passed, coverage_stagnant
         )
 
         log_entry["status"] = "completed"
         log_entry["details"].update({
             "total_coverage": round(total_coverage, 4),
+            "coverage_improvement": round(coverage_improvement, 4) if coverage_improvement is not None else None,
             "validation_passed": validation_passed,
+            "coverage_stagnant": coverage_stagnant,
             "missing_req_ids": missing_req_ids,
         })
 
-        return {
+        result = {
             **state,
             "scored_docs": scored_docs,
             "evidence_requirements": updated_requirements,
             "evidence_coverage": coverage_list,
             "missing_requirements": missing_req_ids,
             "validation_passed": validation_passed,
+            "total_coverage": round(total_coverage, 4),
             "stage_logs": state["stage_logs"] + [log_entry],
         }
+        if coverage_stagnant:
+            result["retry_reason"] = "coverage_stagnant"
+        return result
 
     except Exception as e:
         logger.error("[Validator] Scoring failed: %s", e)

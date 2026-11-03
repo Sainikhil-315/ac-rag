@@ -1,0 +1,722 @@
+[
+  {
+    "id": 1,
+    "question": "What is the main architecture proposed in the paper?",
+    "answer": "The main architecture proposed in the paper is the Transformer, which relies solely on attention mechanisms and dispenses with recurrence and convolutions entirely.",
+    "type": "factual"
+  },
+  {
+    "id": 2,
+    "question": "What BLEU score did the model achieve on the WMT 2014 English-to-German translation task?",
+    "answer": "The model achieved a BLEU score of 28.4 on the WMT 2014 English-to-German translation task.",
+    "type": "numeric"
+  },
+  {
+    "id": 3,
+    "question": "How does the Transformer model improve computational efficiency compared to recurrent models?",
+    "answer": "The Transformer model allows for significantly more parallelization and can reach state-of-the-art translation quality after being trained for as little as twelve hours on eight P100 GPUs.",
+    "type": "analytical"
+  },
+  {
+    "id": 4,
+    "question": "What is self-attention?",
+    "answer": "Self-attention, sometimes called intra-attention, is an attention mechanism that relates different positions of a single sequence to compute a representation of that sequence.",
+    "type": "definition"
+  },
+  {
+    "id": 5,
+    "question": "What is the advantage of using attention mechanisms in sequence modeling?",
+    "answer": "Attention mechanisms allow modeling of dependencies without regard to their distance in the input or output sequences, which is beneficial for sequence modeling tasks.",
+    "type": "analytical"
+  },
+  {
+    "id": 6,
+    "question": "What is the training duration for the Transformer model to achieve state-of-the-art results?",
+    "answer": "The Transformer model can achieve state-of-the-art results after training for 3.5 days on eight GPUs.",
+    "type": "numeric"
+  },
+  {
+    "id": 7,
+    "question": "What is the significance of the number 41.8 in the context of the paper?",
+    "answer": "The number 41.8 represents the new single-model state-of-the-art BLEU score achieved by the model on the WMT 2014 English-to-French translation task.",
+    "type": "numeric"
+  },
+  {
+    "id": 8,
+    "question": "How does the Transformer model compare to traditional recurrent models in terms of training time?",
+    "answer": "The Transformer model requires significantly less time to train compared to traditional recurrent models, achieving high performance in a fraction of the training cost.",
+    "type": "comparative"
+  },
+  {
+    "id": 9,
+    "question": "What are the two machine translation tasks mentioned in the paper?",
+    "answer": "The two machine translation tasks mentioned are the WMT 2014 English-to-German and English-to-French translation tasks.",
+    "type": "factual"
+  },
+  {
+    "id": 10,
+    "question": "What is the role of Multi-Head Attention in the Transformer model?",
+    "answer": "Multi-Head Attention in the Transformer model helps counteract the reduced effective resolution due to averaging attention-weighted positions.",
+    "type": "analytical"
+  },
+  {
+    "id": 11,
+    "question": "What is the main limitation of recurrent models mentioned in the excerpt?",
+    "answer": "The main limitation of recurrent models is their inherently sequential nature, which precludes parallelization within training examples, especially critical at longer sequence lengths.",
+    "type": "factual"
+  },
+  {
+    "id": 12,
+    "question": "What is the contribution of Jakob Uszkoreit to the Transformer model?",
+    "answer": "Jakob Uszkoreit proposed replacing RNNs with self-attention and started the effort to evaluate this idea.",
+    "type": "factual"
+  },
+  {
+    "id": 13,
+    "question": "What is the training cost comparison between the Transformer and the best models from the literature?",
+    "answer": "The Transformer model achieves high performance at a small fraction of the training costs of the best models from the literature.",
+    "type": "comparative"
+  },
+  {
+    "id": 14,
+    "question": "What is the purpose of the attention mechanism in the context of the Transformer?",
+    "answer": "The attention mechanism in the Transformer is used to draw global dependencies between input and output without using sequence-aligned RNNs or convolutions.",
+    "type": "analytical"
+  },
+  {
+    "id": 15,
+    "question": "What are the benefits of using the Transformer model for tasks beyond machine translation?",
+    "answer": "The Transformer model generalizes well to other tasks, as demonstrated by its successful application to English constituency parsing with both large and limited training data.",
+    "type": "analytical"
+  },
+  {
+    "id": 16,
+    "question": "What is the relationship between the number of operations in the Transformer and the distance between positions?",
+    "answer": "In the Transformer, the number of operations required to relate signals from two arbitrary input or output positions is reduced to a constant number, regardless of the distance between positions.",
+    "type": "factual"
+  },
+  {
+    "id": 17,
+    "question": "What is the significance of the term 'state-of-the-art' in the context of the paper?",
+    "answer": "'State-of-the-art' refers to the highest level of performance achieved in translation quality by the Transformer model compared to existing models.",
+    "type": "definition"
+  },
+  {
+    "id": 18,
+    "question": "What is the main focus of the experiments conducted in the paper?",
+    "answer": "The experiments focus on evaluating the performance of the Transformer model on machine translation tasks, demonstrating its superiority in quality and efficiency.",
+    "type": "factual"
+  },
+  {
+    "id": 19,
+    "question": "What is the main advantage of the Transformer over models like ByteNet and ConvS2S?",
+    "answer": "The main advantage of the Transformer over models like ByteNet and ConvS2S is its reliance entirely on self-attention, allowing for better handling of dependencies without sequential computation constraints.",
+    "type": "comparative"
+  },
+  {
+    "id": 20,
+    "question": "What is the number of identical layers in the encoder of the Transformer model?",
+    "answer": "The encoder is composed of a stack of N = 6 identical layers.",
+    "type": "factual"
+  },
+  {
+    "id": 21,
+    "question": "What are the two sub-layers in each encoder layer?",
+    "answer": "The first sub-layer is a multi-head self-attention mechanism, and the second is a simple, position-wise fully connected feed-forward network.",
+    "type": "factual"
+  },
+  {
+    "id": 22,
+    "question": "What dimension do all sub-layers and embedding layers produce outputs of?",
+    "answer": "All sub-layers and embedding layers produce outputs of dimension d = 512.",
+    "type": "numeric"
+  },
+  {
+    "id": 23,
+    "question": "How many identical layers does the decoder have?",
+    "answer": "The decoder is also composed of a stack of N = 6 identical layers.",
+    "type": "factual"
+  },
+  {
+    "id": 24,
+    "question": "What additional sub-layer does the decoder include compared to the encoder?",
+    "answer": "The decoder includes a third sub-layer that performs multi-head attention over the output of the encoder stack.",
+    "type": "factual"
+  },
+  {
+    "id": 25,
+    "question": "What is the purpose of the masking in the decoder's self-attention sub-layer?",
+    "answer": "The masking ensures that positions cannot attend to subsequent positions, allowing predictions for position i to depend only on known outputs at positions less than i.",
+    "type": "analytical"
+  },
+  {
+    "id": 26,
+    "question": "What is the output of the attention function computed as?",
+    "answer": "The output is computed as a weighted sum of the values, where the weight assigned to each value is computed by a compatibility function of the query with the corresponding key.",
+    "type": "factual"
+  },
+  {
+    "id": 27,
+    "question": "What is the name of the attention mechanism described in the text?",
+    "answer": "The attention mechanism is called Scaled Dot-Product Attention.",
+    "type": "definition"
+  },
+  {
+    "id": 28,
+    "question": "What is the formula for computing the attention function?",
+    "answer": "The formula is Attention(Q,K,V) = softmax(QK^T / \u221ad_k)V.",
+    "type": "procedure"
+  },
+  {
+    "id": 29,
+    "question": "What dimensions do the queries and keys have in Scaled Dot-Product Attention?",
+    "answer": "The queries and keys have a dimension of d_k.",
+    "type": "numeric"
+  },
+  {
+    "id": 30,
+    "question": "What is the scaling factor used in the dot-product attention?",
+    "answer": "The scaling factor used is \u221ad_k.",
+    "type": "numeric"
+  },
+  {
+    "id": 31,
+    "question": "How does additive attention differ from dot-product attention?",
+    "answer": "Additive attention computes the compatibility function using a feed-forward network with a single hidden layer, while dot-product attention uses a dot product with a scaling factor.",
+    "type": "comparative"
+  },
+  {
+    "id": 32,
+    "question": "What is the main advantage of dot-product attention over additive attention?",
+    "answer": "Dot-product attention is much faster and more space-efficient in practice, as it can be implemented using highly optimized matrix multiplication code.",
+    "type": "analytical"
+  },
+  {
+    "id": 33,
+    "question": "What happens to the dot products for large values of d_k?",
+    "answer": "For large values of d_k, the dot products grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients.",
+    "type": "analytical"
+  },
+  {
+    "id": 34,
+    "question": "What is the benefit of using Multi-Head Attention?",
+    "answer": "Multi-Head Attention allows for linearly projecting the queries, keys, and values h times with different learned linear projections, enabling the attention function to be performed in parallel.",
+    "type": "analytical"
+  },
+  {
+    "id": 35,
+    "question": "What dimensions are the projected versions of queries, keys, and values in Multi-Head Attention?",
+    "answer": "The projected versions of queries, keys, and values have dimensions d_k, d_k, and d_v, respectively.",
+    "type": "numeric"
+  },
+  {
+    "id": 36,
+    "question": "What is the output of the Multi-Head Attention mechanism?",
+    "answer": "The output of the Multi-Head Attention mechanism is a concatenation of the outputs from each of the attention functions performed in parallel.",
+    "type": "factual"
+  },
+  {
+    "id": 37,
+    "question": "What is the relationship between the mean and variance of the dot product of q and k?",
+    "answer": "The mean of the dot product q\u00b7k is 0, and the variance is d_k.",
+    "type": "factual"
+  },
+  {
+    "id": 38,
+    "question": "What is the purpose of the residual connections in the encoder and decoder?",
+    "answer": "The residual connections facilitate the flow of information through the model by allowing the output of each sub-layer to be combined with its input, followed by layer normalization.",
+    "type": "analytical"
+  },
+  {
+    "id": 39,
+    "question": "What is the purpose of multi-head attention in the Transformer model?",
+    "answer": "Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions, overcoming the limitations of a single attention head where averaging inhibits this capability.",
+    "type": "analytical"
+  },
+  {
+    "id": 40,
+    "question": "How many parallel attention layers, or heads, are employed in the model?",
+    "answer": "The model employs h = 8 parallel attention layers, or heads.",
+    "type": "numeric"
+  },
+  {
+    "id": 41,
+    "question": "What is the dimensionality of the input and output in the feed-forward networks?",
+    "answer": "The dimensionality of input and output in the feed-forward networks is d = 512.",
+    "type": "numeric"
+  },
+  {
+    "id": 42,
+    "question": "What is the inner-layer dimensionality in the feed-forward networks?",
+    "answer": "The inner-layer dimensionality in the feed-forward networks is d_ff = 2048.",
+    "type": "numeric"
+  },
+  {
+    "id": 43,
+    "question": "What type of activation function is used in the feed-forward networks?",
+    "answer": "The feed-forward networks use a ReLU activation function between the two linear transformations.",
+    "type": "definition"
+  },
+  {
+    "id": 44,
+    "question": "What is the complexity per layer for self-attention?",
+    "answer": "The complexity per layer for self-attention is O(n\u00b2\u00b7d).",
+    "type": "numeric"
+  },
+  {
+    "id": 45,
+    "question": "What is the maximum path length for self-attention layers?",
+    "answer": "The maximum path length for self-attention layers is O(1).",
+    "type": "numeric"
+  },
+  {
+    "id": 46,
+    "question": "How does the encoder-decoder attention mechanism function?",
+    "answer": "In encoder-decoder attention layers, the queries come from the previous decoder layer, while the memory keys and values come from the output of the encoder, allowing every position in the decoder to attend to all positions in the input sequence.",
+    "type": "procedure"
+  },
+  {
+    "id": 47,
+    "question": "What is the purpose of positional encodings in the Transformer model?",
+    "answer": "Positional encodings are added to the input embeddings to provide information about the relative or absolute position of tokens in the sequence, compensating for the lack of recurrence and convolution in the model.",
+    "type": "analytical"
+  },
+  {
+    "id": 48,
+    "question": "What mathematical functions are used for positional encodings in this work?",
+    "answer": "The positional encodings use sine and cosine functions of different frequencies, defined as PE = sin(pos/10000^(2i/d_model)) and PE = cos(pos/10000^(2i/d_model)).",
+    "type": "definition"
+  },
+  {
+    "id": 49,
+    "question": "What is the dimensionality of the projections WQ, WK, and WV in multi-head attention?",
+    "answer": "The projections WQ, WK, and WV have dimensions WQ \u2208 R^(d_model\u00d7d_k), WK \u2208 R^(d_model\u00d7d_k), and WV \u2208 R^(d_model\u00d7d_v).",
+    "type": "numeric"
+  },
+  {
+    "id": 50,
+    "question": "What is the relationship between the number of heads and the dimensionality of each head in multi-head attention?",
+    "answer": "The dimensionality of each head is d = d_model / h = 64, due to the reduced dimension of each head when using h = 8 heads.",
+    "type": "comparative"
+  },
+  {
+    "id": 51,
+    "question": "What is the complexity per layer for recurrent layers?",
+    "answer": "The complexity per layer for recurrent layers is O(n\u00b7d\u00b2).",
+    "type": "numeric"
+  },
+  {
+    "id": 52,
+    "question": "What is the minimum number of sequential operations for self-attention?",
+    "answer": "The minimum number of sequential operations for self-attention is O(1).",
+    "type": "numeric"
+  },
+  {
+    "id": 53,
+    "question": "How are the weights used in the embedding layers of the model?",
+    "answer": "The model shares the same weight matrix between the two embedding layers and the pre-softmax linear transformation, multiplying those weights by d_model in the embedding layers.",
+    "type": "procedure"
+  },
+  {
+    "id": 54,
+    "question": "What is the maximum path length for convolutional layers?",
+    "answer": "The maximum path length for convolutional layers is O(log_k(n)).",
+    "type": "numeric"
+  },
+  {
+    "id": 55,
+    "question": "What is the significance of the sinusoidal positional encoding function?",
+    "answer": "The sinusoidal positional encoding function is hypothesized to allow the model to easily learn to attend by relative positions and may enable extrapolation to sequence lengths longer than those encountered during training.",
+    "type": "analytical"
+  },
+  {
+    "id": 56,
+    "question": "What is the complexity per layer for convolutional layers?",
+    "answer": "The complexity per layer for convolutional layers is O(k\u00b7n\u00b7d\u00b2).",
+    "type": "numeric"
+  },
+  {
+    "id": 57,
+    "question": "What is the effect of masking in the decoder's self-attention layers?",
+    "answer": "Masking in the decoder's self-attention layers prevents leftward information flow, preserving the auto-regressive property of the model.",
+    "type": "analytical"
+  },
+  {
+    "id": 58,
+    "question": "What is the size of the shared source-target vocabulary used for the English-German dataset?",
+    "answer": "The shared source-target vocabulary for the English-German dataset is about 37,000 tokens.",
+    "type": "factual"
+  },
+  {
+    "id": 59,
+    "question": "How many sentence pairs were used in the WMT 2014 English-German dataset?",
+    "answer": "The WMT 2014 English-German dataset consists of about 4.5 million sentence pairs.",
+    "type": "factual"
+  },
+  {
+    "id": 60,
+    "question": "What is the dropout rate used for the basemodel?",
+    "answer": "The dropout rate used for the basemodel is P = 0.1.",
+    "type": "numeric"
+  },
+  {
+    "id": 61,
+    "question": "What is the maximum output length set during inference?",
+    "answer": "The maximum output length during inference is set to input length + 50.",
+    "type": "factual"
+  },
+  {
+    "id": 62,
+    "question": "How long did it take to train the big models?",
+    "answer": "The big models were trained for 3.5 days.",
+    "type": "numeric"
+  },
+  {
+    "id": 63,
+    "question": "What is the BLEU score achieved by the big transformer model on the English-to-German task?",
+    "answer": "The big transformer model achieved a BLEU score of 28.4 on the English-to-German task.",
+    "type": "numeric"
+  },
+  {
+    "id": 64,
+    "question": "What is the learning rate formula used during training?",
+    "answer": "The learning rate formula is lrate = d\u22120.5 \u00b7 min(step_num\u22120.5, step_num \u00b7 warmup_steps\u22121.5).",
+    "type": "procedure"
+  },
+  {
+    "id": 65,
+    "question": "What type of optimizer was used for training the models?",
+    "answer": "The Adam optimizer was used for training the models.",
+    "type": "factual"
+  },
+  {
+    "id": 66,
+    "question": "How many GPUs were used to train the models?",
+    "answer": "The models were trained on one machine with 8 NVIDIA P100 GPUs.",
+    "type": "numeric"
+  },
+  {
+    "id": 67,
+    "question": "What is the training cost in FLOPs for the Transformer (big) model on the English-to-French task?",
+    "answer": "The training cost in FLOPs for the Transformer (big) model on the English-to-French task is 2.3\u00b710^19.",
+    "type": "numeric"
+  },
+  {
+    "id": 68,
+    "question": "Compare the BLEU scores of the Transformer (basemodel) and the Transformer (big) model on the English-to-French task.",
+    "answer": "The Transformer (basemodel) achieved a BLEU score of 38.1, while the Transformer (big) model achieved a BLEU score of 41.0, indicating that the big model outperformed the basemodel.",
+    "type": "comparative"
+  },
+  {
+    "id": 69,
+    "question": "What is the effect of label smoothing on model performance?",
+    "answer": "Label smoothing improves accuracy and BLEU score, even though it hurts perplexity as the model learns to be more unsure.",
+    "type": "analytical"
+  },
+  {
+    "id": 70,
+    "question": "What is the complexity of a separable convolution compared to a self-attention layer and a point-wise feed-forward layer?",
+    "answer": "The complexity of a separable convolution is equal to the combination of a self-attention layer and a point-wise feed-forward layer, even with k = n.",
+    "type": "comparative"
+  },
+  {
+    "id": 71,
+    "question": "What is the purpose of restricting self-attention to a neighborhood of size r?",
+    "answer": "Restricting self-attention to a neighborhood of size r aims to improve computational performance for tasks involving very long sequences.",
+    "type": "analytical"
+  },
+  {
+    "id": 72,
+    "question": "What is the training step time for the basemodel?",
+    "answer": "Each training step for the basemodel took about 0.4 seconds.",
+    "type": "numeric"
+  },
+  {
+    "id": 73,
+    "question": "What is the value of \u03b21 used in the Adam optimizer?",
+    "answer": "The value of \u03b21 used in the Adam optimizer is 0.9.",
+    "type": "numeric"
+  },
+  {
+    "id": 74,
+    "question": "What is the significance of using beam search with a beam size of 4?",
+    "answer": "Using beam search with a beam size of 4 helps improve the quality of the translations by considering multiple hypotheses during decoding.",
+    "type": "analytical"
+  },
+  {
+    "id": 75,
+    "question": "What is the total number of training steps for the basemodel?",
+    "answer": "The basemodel was trained for a total of 100,000 steps.",
+    "type": "numeric"
+  },
+  {
+    "id": 76,
+    "question": "What is the dropout rate used for the big model?",
+    "answer": "The dropout rate used for the big model is also P = 0.1, instead of 0.3.",
+    "type": "factual"
+  },
+  {
+    "id": 77,
+    "question": "What is the base model's BLEU score on the English-to-German translation development set?",
+    "answer": "The base model's BLEU score is 25.8.",
+    "type": "factual"
+  },
+  {
+    "id": 78,
+    "question": "How many layers does the Transformer model have in the English constituency parsing experiments?",
+    "answer": "The Transformer model has 4 layers in the English constituency parsing experiments.",
+    "type": "factual"
+  },
+  {
+    "id": 79,
+    "question": "What is the dropout rate used in the base model?",
+    "answer": "The dropout rate used in the base model is 0.1.",
+    "type": "numeric"
+  },
+  {
+    "id": 80,
+    "question": "What is the number of parameters in the 'big' model?",
+    "answer": "The 'big' model has 213 million parameters.",
+    "type": "numeric"
+  },
+  {
+    "id": 81,
+    "question": "In Table 3, what happens to model quality when reducing the attention key size?",
+    "answer": "Reducing the attention key size hurts model quality, suggesting that determining compatibility is not easy.",
+    "type": "analytical"
+  },
+  {
+    "id": 82,
+    "question": "What is the maximum output length set to during inference for the WSJ constituency parsing?",
+    "answer": "The maximum output length is set to input length plus 300.",
+    "type": "numeric"
+  },
+  {
+    "id": 83,
+    "question": "What is the F1 score of the Transformer model trained only on the WSJ dataset?",
+    "answer": "The F1 score of the Transformer model trained only on the WSJ dataset is 91.3.",
+    "type": "numeric"
+  },
+  {
+    "id": 84,
+    "question": "How does the performance of the Transformer compare to RNN sequence-to-sequence models?",
+    "answer": "The Transformer outperforms RNN sequence-to-sequence models even when training only on the WSJ training set of 40K sentences.",
+    "type": "comparative"
+  },
+  {
+    "id": 85,
+    "question": "What is the vocabulary size used for the WSJ only setting?",
+    "answer": "The vocabulary size used for the WSJ only setting is 16K tokens.",
+    "type": "numeric"
+  },
+  {
+    "id": 86,
+    "question": "What is the effect of dropout on model performance according to the results?",
+    "answer": "Dropout is very helpful in avoiding overfitting and improves model performance.",
+    "type": "analytical"
+  },
+  {
+    "id": 87,
+    "question": "What type of positional encoding is used in row (E) of Table 3?",
+    "answer": "Row (E) uses learned positional embeddings instead of sinusoidal positional encoding.",
+    "type": "factual"
+  },
+  {
+    "id": 88,
+    "question": "What is the BLEU score of the 'big' model on the English-to-German translation development set?",
+    "answer": "The BLEU score of the 'big' model is 26.4.",
+    "type": "numeric"
+  },
+  {
+    "id": 89,
+    "question": "What is the learning rate schedule constant used in the base model?",
+    "answer": "The learning rate schedule constant used in the base model is 0.1.",
+    "type": "numeric"
+  },
+  {
+    "id": 90,
+    "question": "What is the F1 score of the best-performing semi-supervised model listed in Table 4?",
+    "answer": "The best-performing semi-supervised model listed in Table 4 has an F1 score of 92.1.",
+    "type": "numeric"
+  },
+  {
+    "id": 91,
+    "question": "What does the Transformer replace in traditional encoder-decoder architectures?",
+    "answer": "The Transformer replaces the recurrent layers commonly used in encoder-decoder architectures with multi-headed self-attention.",
+    "type": "definition"
+  },
+  {
+    "id": 92,
+    "question": "What is the effect of using too many attention heads according to the results?",
+    "answer": "Using too many attention heads leads to a drop in quality, as indicated by a 0.9 BLEU score worse than the best setting.",
+    "type": "analytical"
+  },
+  {
+    "id": 93,
+    "question": "What is the number of training steps for the base model?",
+    "answer": "The number of training steps for the base model is 100K.",
+    "type": "numeric"
+  },
+  {
+    "id": 94,
+    "question": "What is the F1 score of the Transformer model in the semi-supervised setting?",
+    "answer": "The F1 score of the Transformer model in the semi-supervised setting is 92.7.",
+    "type": "numeric"
+  },
+  {
+    "id": 95,
+    "question": "What is the beam size used during inference for both WSJ only and semi-supervised settings?",
+    "answer": "The beam size used during inference for both settings is 21.",
+    "type": "numeric"
+  },
+  {
+    "id": 96,
+    "question": "Who are the authors of the paper titled 'Learning phrase representations using rnn encoder-decoder for statistical machine translation'?",
+    "answer": "The authors are Kyunghyun Cho, Bart van Merrienboer, Caglar Gulcehre, Fethi Bougares, Holger Schwenk, and Yoshua Bengio.",
+    "type": "factual"
+  },
+  {
+    "id": 97,
+    "question": "What year was the paper 'Xception: Deep learning with depthwise separable convolutions' published?",
+    "answer": "The paper was published in 2016.",
+    "type": "factual"
+  },
+  {
+    "id": 98,
+    "question": "How many authors contributed to the paper 'Neural machine translation of rare words with subword units'?",
+    "answer": "There are three authors: Rico Sennrich, Barry Haddow, and Alexandra Birch.",
+    "type": "factual"
+  },
+  {
+    "id": 99,
+    "question": "What is the main focus of the paper by Ilya Sutskever, Oriol Vinyals, and Quoc V. Le?",
+    "answer": "The main focus is on sequence-to-sequence learning with neural networks.",
+    "type": "factual"
+  },
+  {
+    "id": 100,
+    "question": "What is the title of the paper authored by Diederik Kingma and Jimmy Ba?",
+    "answer": "The title is 'Adam: A method for stochastic optimization'.",
+    "type": "factual"
+  },
+  {
+    "id": 101,
+    "question": "In which conference was the paper 'Effective approaches to attention-based neural machine translation' presented?",
+    "answer": "It was presented at the Empirical Methods in Natural Language Processing in 2015.",
+    "type": "factual"
+  },
+  {
+    "id": 102,
+    "question": "What is the publication year of the paper 'Gradient flow in recurrent nets: the difficulty of learning long-term dependencies'?",
+    "answer": "The paper was published in 2001.",
+    "type": "factual"
+  },
+  {
+    "id": 103,
+    "question": "What is the main contribution of the paper 'Deep residual learning for image recognition'?",
+    "answer": "The main contribution is the introduction of deep residual networks for image recognition tasks.",
+    "type": "factual"
+  },
+  {
+    "id": 104,
+    "question": "What is the dropout rate mentioned in the paper by Nitish Srivastava et al.?",
+    "answer": "The dropout rate is not specified in the provided excerpt.",
+    "type": "factual"
+  },
+  {
+    "id": 105,
+    "question": "How many pages does the paper 'Building a large annotated corpus of English: The Penn Treebank' span?",
+    "answer": "The paper spans pages 313\u2013330.",
+    "type": "numeric"
+  },
+  {
+    "id": 106,
+    "question": "What is the title of the paper that discusses 'Neural GPUs learn algorithms'?",
+    "answer": "The title is 'Neural GPUs learn algorithms'.",
+    "type": "factual"
+  },
+  {
+    "id": 107,
+    "question": "Which paper discusses the concept of 'self-training PCFG grammars with latent annotations across languages'?",
+    "answer": "The paper is authored by Zhongqiang Huang and Mary Harper.",
+    "type": "factual"
+  },
+  {
+    "id": 108,
+    "question": "What is the focus of the paper 'A deep reinforced model for abstractive summarization'?",
+    "answer": "The focus is on developing a deep reinforced model specifically for abstractive summarization tasks.",
+    "type": "factual"
+  },
+  {
+    "id": 109,
+    "question": "Compare the publication years of 'Long short-term memory' and 'Gradient flow in recurrent nets'.",
+    "answer": "'Long short-term memory' was published in 1997, while 'Gradient flow in recurrent nets' was published in 2001.",
+    "type": "comparative"
+  },
+  {
+    "id": 110,
+    "question": "What is the main topic of the paper 'Exploring the limits of language modeling'?",
+    "answer": "The main topic is the exploration of the capabilities and limitations of language modeling techniques.",
+    "type": "factual"
+  },
+  {
+    "id": 111,
+    "question": "What is the significance of the paper 'Using the output embedding to improve language models'?",
+    "answer": "The significance lies in its proposal to enhance language models by utilizing the output embedding.",
+    "type": "factual"
+  },
+  {
+    "id": 112,
+    "question": "What does the paper 'Neural machine translation in linear time' focus on?",
+    "answer": "It focuses on developing methods for neural machine translation that operate in linear time complexity.",
+    "type": "factual"
+  },
+  {
+    "id": 113,
+    "question": "What is the main contribution of the paper 'A structured self-attentive sentence embedding'?",
+    "answer": "The main contribution is the introduction of a structured self-attentive mechanism for sentence embeddings.",
+    "type": "factual"
+  },
+  {
+    "id": 114,
+    "question": "What is the primary method discussed in the paper by Oleksii Kuchaiev and Boris Ginsburg?",
+    "answer": "The primary method discussed is factorization tricks for LSTM networks.",
+    "type": "factual"
+  },
+  {
+    "id": 115,
+    "question": "What is the focus of the attention mechanism in layer 5 of the encoder?",
+    "answer": "The attention mechanism in layer 5 of the encoder focuses on long-distance dependencies, particularly attending to the verb 'making' in the phrase 'making...moredifficult'.",
+    "type": "factual"
+  },
+  {
+    "id": 116,
+    "question": "How many attention heads are mentioned in the excerpt?",
+    "answer": "The excerpt mentions two attention heads in layer 5 of the encoder.",
+    "type": "numeric"
+  },
+  {
+    "id": 117,
+    "question": "What does the different color in the attention visualizations represent?",
+    "answer": "Different colors in the attention visualizations represent different attention heads.",
+    "type": "definition"
+  },
+  {
+    "id": 118,
+    "question": "What is the purpose of the attention heads shown in Figure 4?",
+    "answer": "The attention heads shown in Figure 4 are involved in anaphora resolution.",
+    "type": "factual"
+  },
+  {
+    "id": 119,
+    "question": "What is indicated by the sharp attentions for the word 'its'?",
+    "answer": "The sharp attentions for the word 'its' indicate that the attention heads are focusing precisely on this word for anaphora resolution.",
+    "type": "analytical"
+  },
+  {
+    "id": 120,
+    "question": "What is the relationship between the verb 'making' and the phrase 'making...moredifficult'?",
+    "answer": "The verb 'making' is part of a long-distance dependency that completes the phrase 'making...moredifficult'.",
+    "type": "comparative"
+  }
+]

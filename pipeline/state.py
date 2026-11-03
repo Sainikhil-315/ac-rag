@@ -180,6 +180,7 @@ class ACRagState(TypedDict):
     # ── Validator / Coverage Engine outputs ───────────────────────────────────
     scored_docs: Optional[List[Dict[str, Any]]]     # docs with "score" field added
     validation_passed: Optional[bool]
+    total_coverage: Optional[float]     # weighted coverage score from the most recent validation pass
     evidence_coverage: Optional[List[EvidenceCoverage]]
     missing_requirements: Optional[List[str]]        # IDs of unresolved requirements
     targeted_queries: Optional[List[Dict[str, Any]]]  # queries generated for missing requirements
@@ -241,6 +242,7 @@ def initial_state(
         retrieved_evidence=None,
         scored_docs=None,
         validation_passed=None,
+        total_coverage=None,
         evidence_coverage=None,
         missing_requirements=None,
         targeted_queries=None,

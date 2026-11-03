@@ -35,8 +35,8 @@ export function SegmentedControl({ options, value, onChange, className = "" }) {
             className={`
               px-3 py-1.5 text-xs font-medium rounded-md transition-all
               ${active
-                ? 'bg-surface text-primary shadow-sm'
-                : 'text-secondary hover:text-primary'}
+                ? 'bg-surface text-text shadow-sm'
+                : 'text-secondary hover:text-text'}
             `}
           >
             {opt.label}

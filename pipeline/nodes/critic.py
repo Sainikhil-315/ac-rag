@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Tuple
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 
-from config.settings import CRITIC_MIN_SCORE, USE_CRITIC
+from config.settings import CRITIC_MIN_SCORE, CRITIC_REQUIRE_ALL_DIMS, USE_CRITIC
 from pipeline.state import ACRagState, CriticScores
 from utils.llm_factory import get_llm
 
@@ -164,7 +164,9 @@ def _all_pass(eval_result: CriticEvaluation) -> bool:
         eval_result.figure_accuracy,
         eval_result.conciseness,
     ]
-    return all(d >= CRITIC_MIN_SCORE for d in dims)
+    if CRITIC_REQUIRE_ALL_DIMS:
+        return all(d >= CRITIC_MIN_SCORE for d in dims)
+    return (sum(dims) / len(dims)) >= CRITIC_MIN_SCORE
 
 
 def _compute_overall(eval_result: CriticEvaluation) -> float:

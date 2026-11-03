@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ThemeProvider } from './ThemeContext'
 import Header from './components/Header'
-import PipelineCanvas from './components/pipeline/PipelineCanvas'
-import AgentInspector from './components/inspector/AgentInspector'
-import Playground from './components/playground/Playground'
-import Results from './components/results/Results'
-import Landing from './components/Landing'
+import ChatList from './components/Sidebar/ChatList'
+import ChatWindow from './components/Chat/ChatWindow'
+import FilesPanel from './components/FilesPanel/FilesPanel'
 
 function lsGet(key, fallback) {
   try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback }
@@ -15,138 +13,82 @@ function lsSet(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)) } catch {}
 }
 
+let sessionCounter = 0
+const newSession = () => ({ id: `s${Date.now()}_${sessionCounter++}`, messages: [] })
+
 export default function App() {
-  const [showLanding,   setShowLanding]   = useState(() => !lsGet('ac_doc_ready', false))
-  const [activeTab,     setActiveTab]     = useState('Playground')
-  const [selectedAgent, setSelectedAgent] = useState(null)
+  const [sessions, setSessions] = useState(() => {
+    const saved = lsGet('ac_sessions', [])
+    return saved.length ? saved : [newSession()]
+  })
+  const [activeId, setActiveId] = useState(() => lsGet('ac_active_session', null) || sessions[0]?.id)
 
-  // Pipeline live state
-  const [agentStates, setAgentStates] = useState({})
-  const [agentMeta,   setAgentMeta]   = useState({})
-
-  // Run history — last 10 runs, newest first
-  const [runHistory, setRunHistory] = useState(() => lsGet('ac_run_history', []))
-
-  // Document state
-  const [docName,  setDocName]  = useState(() => lsGet('ac_doc_name',  null))
+  const [docName, setDocName] = useState(() => lsGet('ac_doc_name', null))
   const [docReady, setDocReady] = useState(() => lsGet('ac_doc_ready', false))
-  const [docList,  setDocList]  = useState(() => lsGet('ac_doc_list',  []))
+  const [docList, setDocList] = useState(() => lsGet('ac_doc_list', []))
 
-  // Conversation history
-  const [messages, setMessages] = useState(() => lsGet('ac_messages', []))
+  const persist = (nextSessions) => { setSessions(nextSessions); lsSet('ac_sessions', nextSessions) }
 
-  useEffect(() => { lsSet('ac_doc_name',    docName)    }, [docName])
-  useEffect(() => { lsSet('ac_doc_ready',   docReady)   }, [docReady])
-  useEffect(() => { lsSet('ac_doc_list',    docList)    }, [docList])
-  useEffect(() => { lsSet('ac_messages',    messages)   }, [messages])
-  useEffect(() => { lsSet('ac_run_history', runHistory) }, [runHistory])
+  const activeSession = sessions.find(s => s.id === activeId) || sessions[0]
 
-  // Reconcile persisted "document ready" state with the backend on load.
-  // The backend keeps its loaded-document state in memory only (backend/api.py
-  // _state dict) — a server restart (e.g. uvicorn --reload picking up a code
-  // change) wipes it, but localStorage still says a document is loaded. Without
-  // this check the UI shows a document as ready while every /ask call 400s with
-  // "No document loaded" — confusing and looked like a hang/bug rather than what
-  // it was (stale client state after a server restart).
-  useEffect(() => {
-    if (!docReady) return
-    fetch('/api/status')
-      .then(res => res.json())
-      .then(data => {
-        if (!data.ready) {
-          setDocName(null); setDocReady(false); setDocList([])
-        }
-      })
-      .catch(() => {
-        // Backend unreachable — leave state as-is rather than clearing on a
-        // transient network blip; the next /ask attempt will surface the error.
-      })
-    // Only on mount — subsequent doc state changes come from explicit
-    // upload/clear actions, which already keep frontend and backend in sync.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const handleUpdateSession = (updater) => {
+    persist(sessions.map(s => (s.id === activeSession.id ? updater(s) : s)))
+  }
+
+  const handleNewChat = () => {
+    const s = newSession()
+    persist([s, ...sessions])
+    setActiveId(s.id)
+    lsSet('ac_active_session', s.id)
+  }
+
+  const handleSelect = (id) => { setActiveId(id); lsSet('ac_active_session', id) }
+
+  const handleDelete = (id) => {
+    const remaining = sessions.filter(s => s.id !== id)
+    const next = remaining.length ? remaining : [newSession()]
+    persist(next)
+    if (id === activeId) { setActiveId(next[0].id); lsSet('ac_active_session', next[0].id) }
+  }
 
   const handleDocumentReady = (name, allDocs) => {
-    setDocName(name)
-    setDocReady(true)
-    setDocList(allDocs || [name])
-    // Don't clear messages on additional uploads — only on first upload or explicit clear
+    setDocName(name); lsSet('ac_doc_name', name)
+    setDocReady(true); lsSet('ac_doc_ready', true)
+    const list = allDocs || [name]
+    setDocList(list); lsSet('ac_doc_list', list)
   }
 
   const handleDocumentCleared = () => {
-    setDocName(null); setDocReady(false); setDocList([]); setMessages([])
-    lsSet('ac_doc_name', null); lsSet('ac_doc_ready', false)
-    lsSet('ac_doc_list', []); lsSet('ac_messages', [])
-  }
-
-  const handleAgentStateChange = (id, state) =>
-    setAgentStates(prev => ({ ...prev, [id]: state }))
-
-  const handleAgentMetaChange = (id, meta) =>
-    setAgentMeta(prev => ({ ...prev, [id]: meta }))
-
-  const handleResetAll = () => {
-    setAgentStates({})
-    setAgentMeta({})
-    setSelectedAgent(null)
-  }
-
-  const handleRunMetaChange = (meta) =>
-    setRunHistory(prev => [meta, ...prev].slice(0, 10))
-
-  const lastRoute = runHistory[0]?.route ?? null
-
-  if (showLanding) {
-    return (
-      <ThemeProvider>
-        <Landing onTryMe={() => { setShowLanding(false); setActiveTab('Playground') }} />
-      </ThemeProvider>
-    )
+    setDocName(null); lsSet('ac_doc_name', null)
+    setDocReady(false); lsSet('ac_doc_ready', false)
+    setDocList([]); lsSet('ac_doc_list', [])
   }
 
   return (
     <ThemeProvider>
       <div className="h-screen flex flex-col bg-bg font-sans overflow-hidden">
-        <Header activeTab={activeTab} onTabChange={setActiveTab} />
-
+        <Header />
         <div className="flex-1 flex overflow-hidden">
-          {activeTab === 'Pipeline' && (
-            <>
-              <PipelineCanvas
-                agentStates={agentStates}
-                agentMeta={agentMeta}
-                selectedAgent={selectedAgent}
-                onSelectAgent={setSelectedAgent}
-                lastRoute={lastRoute}
-              />
-              <AgentInspector
-                selectedAgentId={selectedAgent}
-                agentStates={agentStates}
-                agentMeta={agentMeta}
-              />
-            </>
-          )}
-
-          {activeTab === 'Playground' && (
-            <Playground
-              docName={docName}
+          <ChatList
+            sessions={sessions}
+            activeId={activeSession?.id}
+            onSelect={handleSelect}
+            onNew={handleNewChat}
+            onDelete={handleDelete}
+          />
+          {activeSession && (
+            <ChatWindow
+              session={activeSession}
+              onUpdateSession={handleUpdateSession}
               docReady={docReady}
-              docList={docList}
-              onDocumentReady={handleDocumentReady}
-              onDocumentCleared={handleDocumentCleared}
-              agentStates={agentStates}
-              onAgentStateChange={handleAgentStateChange}
-              onAgentMetaChange={handleAgentMetaChange}
-              onResetAll={handleResetAll}
-              onRunMetaChange={handleRunMetaChange}
-              messages={messages}
-              onMessagesChange={setMessages}
             />
           )}
-
-          {activeTab === 'Results' && (
-            <Results agentMeta={agentMeta} runHistory={runHistory} />
-          )}
+          <FilesPanel
+            docList={docList}
+            docReady={docReady}
+            onDocumentReady={handleDocumentReady}
+            onDocumentCleared={handleDocumentCleared}
+          />
         </div>
       </div>
     </ThemeProvider>

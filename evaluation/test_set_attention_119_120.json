@@ -1,0 +1,14 @@
+[
+  {
+    "id": 119,
+    "question": "What is indicated by the sharp attentions for the word 'its'?",
+    "answer": "The sharp attentions for the word 'its' indicate that the attention heads are focusing precisely on this word for anaphora resolution.",
+    "type": "analytical"
+  },
+  {
+    "id": 120,
+    "question": "What is the relationship between the verb 'making' and the phrase 'making...moredifficult'?",
+    "answer": "The verb 'making' is part of a long-distance dependency that completes the phrase 'making...moredifficult'.",
+    "type": "comparative"
+  }
+]

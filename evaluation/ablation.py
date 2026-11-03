@@ -167,6 +167,17 @@ ABLATION_CONFIGS: List[Dict[str, Any]] = [
             "USE_CRITIC": True,
         },
     },
+    {
+        "name": "critic_relaxed",
+        "description": (
+            "Full AC-RAG pipeline, but the critic passes an answer on the MEAN of its "
+            "5 dimension scores instead of requiring ALL 5 individually >= CRITIC_MIN_SCORE. "
+            "Tests whether strict all-dims gating is rejecting otherwise-good answers."
+        ),
+        "overrides": {
+            "CRITIC_REQUIRE_ALL_DIMS": False,
+        },
+    },
 ]
 
 

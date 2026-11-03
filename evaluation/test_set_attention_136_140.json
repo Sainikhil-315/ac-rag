@@ -1,0 +1,32 @@
+[
+  {
+    "id": 136,
+    "question": "What specific behavior did individual attention heads exhibit in the visualization examples discussed in the paper, and what does this suggest about the interpretability of the model's attention distributions?",
+    "answer": "In the visualization examples, individual attention heads were shown to clearly learn to perform distinct tasks — for example, heads involved in resolving long-distance dependencies such as anaphora resolution (correctly attending to the right antecedent for a word like 'its'), as well as heads exhibiting behavior related to the syntactic and semantic structure of the sentences. This suggests that many attention heads learn interpretable, specialized functions, making the model's attention distributions more interpretable than typical attention mechanisms in other architectures.",
+    "type": "multihop_complex"
+  },
+  {
+    "id": 137,
+    "question": "According to the model variation experiments, how does reducing the number of attention heads to a single head affect BLEU score, and what does this reveal about the importance of the number of attention heads as a hyperparameter?",
+    "answer": "Using a single attention head (h=1) is 0.9 BLEU worse than the best reported setting, but quality also degrades if there are too many heads. This shows that the number of attention heads is an important hyperparameter with a middle-ground optimum, rather than simply 'more heads is strictly better.'",
+    "type": "multihop_complex"
+  },
+  {
+    "id": 138,
+    "question": "What BLEU scores did the big Transformer model achieve on WMT 2014 English-to-German and English-to-French translation respectively, and how do these results compare to previous state-of-the-art models in terms of training cost?",
+    "answer": "On WMT 2014 English-to-German, the big Transformer model achieves a new state-of-the-art BLEU score of 28.4. On WMT 2014 English-to-French, it achieves a BLEU score of 41.8, also outperforming all previously published single models. On both tasks, the Transformer achieves these results at a fraction of the training cost of the previous best models, including previously reported state-of-the-art single and ensemble models.",
+    "type": "multihop_complex"
+  },
+  {
+    "id": 139,
+    "question": "How are the weights of the input embedding layer, output embedding layer, and pre-softmax linear transformation related, and why are the embedding weights additionally multiplied by a scaling factor?",
+    "answer": "The Transformer shares the same weight matrix between the input embedding layer, the output embedding layer, and the pre-softmax linear transformation. In the embedding layers, these shared weights are multiplied by the square root of d_model, which scales the embeddings appropriately relative to the positional encodings they are summed with.",
+    "type": "multihop_complex"
+  },
+  {
+    "id": 140,
+    "question": "How does the paper justify its claim that the Transformer allows for significantly more parallelization than models based on recurrent layers, and what complexity argument supports this claim?",
+    "answer": "The paper notes that recurrent models preclude parallelization within training examples, since the computation of each hidden state depends sequentially on the previous hidden state, which becomes a limiting factor at longer sequence lengths. In contrast, self-attention layers connect all positions with a constant number of sequential operations, O(1), compared to O(n) sequential operations for recurrent layers, allowing computation across all positions in a sequence to be performed in parallel rather than sequentially. This complexity difference is the basis for the paper's claim of significantly more parallelizable training.",
+    "type": "multihop_complex"
+  }
+]

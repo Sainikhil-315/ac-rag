@@ -1,0 +1,8 @@
+[
+  {
+    "id": 121,
+    "question": "Compare the Transformer base and big models in terms of number of training steps, training hardware/time, dropout rate, and the BLEU score achieved on WMT 2014 English-to-German translation, and state the approximate training cost in FLOPs for each.",
+    "answer": "The base model trains for 100,000 steps (12 hours on 8 NVIDIA P100 GPUs) and achieves a BLEU score of 27.3 on English-to-German, at an estimated training cost of about 3.3x10^18 FLOPs. The big model trains for 300,000 steps (3.5 days) using a dropout rate of Pdrop=0.1 (instead of the usual 0.3), achieving a new state-of-the-art BLEU score of 28.4, at an estimated cost of about 2.3x10^19 FLOPs \u00e2\u20ac\u201d a large BLEU improvement for substantially more compute, but still less than previously reported state-of-the-art training costs.",
+    "type": "multihop_complex"
+  }
+]

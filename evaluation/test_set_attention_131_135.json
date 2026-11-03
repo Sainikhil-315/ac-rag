@@ -1,0 +1,32 @@
+[
+  {
+    "id": 131,
+    "question": "How is the final output of multi-head attention computed from the h parallel attention heads, in terms of concatenation and projection?",
+    "answer": "The outputs of the h parallel attention heads (each of dimension d_v) are concatenated together, and the concatenated result is then multiplied by an output projection matrix W^O to produce the final output, which has dimension d_model.",
+    "type": "normal_hard"
+  },
+  {
+    "id": 132,
+    "question": "How does the maximum path length between any two positions differ across self-attention, recurrent, and convolutional layers, and why does this matter for learning long-range dependencies?",
+    "answer": "Self-attention connects all positions with a constant number of operations, O(1) path length. Recurrent layers require O(n) sequential operations to connect distant positions. Convolutional layers require a stack of O(n/k) layers (or O(log_k(n)) for dilated convolutions) to connect two positions that are far apart. A shorter maximum path length between any two positions makes it easier for the network to learn long-range dependencies, since the signal has to traverse fewer layers.",
+    "type": "normal_hard"
+  },
+  {
+    "id": 133,
+    "question": "Where is residual dropout applied during training of the Transformer, beyond just within each sub-layer's output?",
+    "answer": "Residual dropout is applied to the output of each sub-layer before it is added to the sub-layer input and normalized. In addition, dropout is also applied to the sums of the embeddings and the positional encodings in both the encoder and decoder stacks.",
+    "type": "normal_hard"
+  },
+  {
+    "id": 134,
+    "question": "In the encoder-decoder attention sub-layer, where do the queries, keys, and values come from, and how does this differ from the encoder's self-attention sub-layer?",
+    "answer": "In the encoder-decoder attention sub-layer, queries come from the previous decoder layer, while the keys and values come from the output of the encoder, allowing every position in the decoder to attend over all positions in the input sequence. This differs from the encoder's self-attention sub-layer, where the queries, keys, and values all come from the same place, the output of the previous layer in the encoder.",
+    "type": "normal_hard"
+  },
+  {
+    "id": 135,
+    "question": "What two sub-layers make up each layer of the encoder, and how are they each wrapped with residual connections and normalization?",
+    "answer": "Each encoder layer has two sub-layers: a multi-head self-attention mechanism, and a simple, position-wise fully connected feed-forward network. A residual connection is employed around each of the two sub-layers, followed by layer normalization, so the output of each sub-layer is LayerNorm(x + Sublayer(x)), where Sublayer(x) is the function implemented by the sub-layer itself.",
+    "type": "normal_hard"
+  }
+]

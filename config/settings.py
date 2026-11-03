@@ -113,8 +113,16 @@ SUMMARIZATION_SCORE_THRESHOLD  = 0.05
 SUMMARIZATION_MIN_VALID_PASSAGES = 1
 
 # ── Critic / Self-Reflection ──────────────────────────────────────────────────
-CRITIC_MIN_SCORE = 4    # all dimensions must be >= 4 (scale 1–5)
-MAX_RETRIES      = 2
+CRITIC_MIN_SCORE = 4    # pass bar (scale 1–5), applied per CRITIC_REQUIRE_ALL_DIMS below
+MAX_RETRIES      = 3
+
+# True (default): ALL 5 critic dimensions must individually be >= CRITIC_MIN_SCORE
+#                 (one weak dimension rejects an otherwise-good answer).
+# False:          the MEAN of the 5 dimensions must be >= CRITIC_MIN_SCORE instead
+#                 (a single soft spot doesn't sink the answer on its own).
+# Exposed as the "critic_relaxed" ablation variant — not the default, so the
+# strict/relaxed comparison itself is a disclosed, labeled experiment.
+CRITIC_REQUIRE_ALL_DIMS = True
 
 # ── Faithfulness constraint (formal objective) ────────────────────────────────
 FAITHFULNESS_THRESHOLD = 0.80    # τ in: Faith(a, R(q,D)) ≥ τ
@@ -148,8 +156,18 @@ RRF_K                = 60
 
 # Evidence Requirement Planning & Coverage
 REQUIREMENT_MAX_COUNT        = 6
-COVERAGE_THRESHOLD           = 0.60
-CRITICAL_COVERAGE_THRESHOLD  = 0.80
+COVERAGE_THRESHOLD           = 0.45
+# Recalibrated 2026-10-11: 0.60 (the original, never-empirically-checked value)
+# was ground-truth tested by bypassing it on 10 real SQuAD questions it had
+# blocked and comparing the generator's answers to the SQuAD reference answers
+# directly. Result: 8/10 were correct despite critical-requirement cosine scores
+# as low as 0.33 — there is no clean score separation between correct and
+# incorrect answers in the 0.33-0.72 range for this embedding model/corpus, so
+# 0.60 was rejecting good answers before they were ever attempted. The two real
+# failures in that sample were each independently caught by the critic/claim
+# verifier downstream, not by this score — so this threshold's job is just to
+# require "more than the bare SUPPORTED minimum", not to be the error-catcher.
+CRITICAL_COVERAGE_THRESHOLD  = 0.25
 MIN_COVERAGE_IMPROVEMENT     = 0.10
 
 # Claim Verification & Contradiction Detection

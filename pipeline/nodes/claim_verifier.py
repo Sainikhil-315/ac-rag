@@ -18,7 +18,7 @@ from typing import Any, Dict, List
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 
-from config.settings import CLAIM_SUPPORT_THRESHOLD, USE_CLAIM_VERIFICATION
+from config.settings import CLAIM_SUPPORT_THRESHOLD, CONTRADICTION_THRESHOLD, USE_CLAIM_VERIFICATION
 from pipeline.state import ACRagState, ClaimVerification
 from utils.llm_factory import get_llm
 from utils.scoring import score_passages_against_query
@@ -124,16 +124,26 @@ def claim_verifier_node(state: ACRagState) -> ACRagState:
         supported_count = 0
 
         for v in result.verifications:
+            # Enforce the numeric thresholds directly rather than trusting the LLM's
+            # own status label at face value — a claim it labels SUPPORTED but with a
+            # low support_score, or any claim with a high contradiction_score, gets
+            # the stricter status regardless of what the model said.
+            status = v.status
+            if v.contradiction_score >= CONTRADICTION_THRESHOLD:
+                status = "CONTRADICTED"
+            elif status == "SUPPORTED" and v.support_score < CLAIM_SUPPORT_THRESHOLD:
+                status = "PARTIALLY_SUPPORTED"
+
             v_dict: ClaimVerification = {
                 "claim_id": v.claim_id,
-                "status": v.status,
+                "status": status,
                 "support_score": round(v.support_score, 4),
                 "contradiction_score": round(v.contradiction_score, 4),
                 "evidence_ids": v.evidence_ids or [],
                 "reason": v.reason,
             }
             verifications.append(v_dict)
-            if v.status in ("SUPPORTED", "PARTIALLY_SUPPORTED"):
+            if status in ("SUPPORTED", "PARTIALLY_SUPPORTED"):
                 supported_count += 1
 
         logger.info(

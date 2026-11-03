@@ -1,0 +1,164 @@
+[
+  {
+    "id": 94,
+    "question": "What is the F1 score of the Transformer model in the semi-supervised setting?",
+    "answer": "The F1 score of the Transformer model in the semi-supervised setting is 92.7.",
+    "type": "numeric"
+  },
+  {
+    "id": 95,
+    "question": "What is the beam size used during inference for both WSJ only and semi-supervised settings?",
+    "answer": "The beam size used during inference for both settings is 21.",
+    "type": "numeric"
+  },
+  {
+    "id": 96,
+    "question": "Who are the authors of the paper titled 'Learning phrase representations using rnn encoder-decoder for statistical machine translation'?",
+    "answer": "The authors are Kyunghyun Cho, Bart van Merrienboer, Caglar Gulcehre, Fethi Bougares, Holger Schwenk, and Yoshua Bengio.",
+    "type": "factual"
+  },
+  {
+    "id": 97,
+    "question": "What year was the paper 'Xception: Deep learning with depthwise separable convolutions' published?",
+    "answer": "The paper was published in 2016.",
+    "type": "factual"
+  },
+  {
+    "id": 98,
+    "question": "How many authors contributed to the paper 'Neural machine translation of rare words with subword units'?",
+    "answer": "There are three authors: Rico Sennrich, Barry Haddow, and Alexandra Birch.",
+    "type": "factual"
+  },
+  {
+    "id": 99,
+    "question": "What is the main focus of the paper by Ilya Sutskever, Oriol Vinyals, and Quoc V. Le?",
+    "answer": "The main focus is on sequence-to-sequence learning with neural networks.",
+    "type": "factual"
+  },
+  {
+    "id": 100,
+    "question": "What is the title of the paper authored by Diederik Kingma and Jimmy Ba?",
+    "answer": "The title is 'Adam: A method for stochastic optimization'.",
+    "type": "factual"
+  },
+  {
+    "id": 101,
+    "question": "In which conference was the paper 'Effective approaches to attention-based neural machine translation' presented?",
+    "answer": "It was presented at the Empirical Methods in Natural Language Processing in 2015.",
+    "type": "factual"
+  },
+  {
+    "id": 102,
+    "question": "What is the publication year of the paper 'Gradient flow in recurrent nets: the difficulty of learning long-term dependencies'?",
+    "answer": "The paper was published in 2001.",
+    "type": "factual"
+  },
+  {
+    "id": 103,
+    "question": "What is the main contribution of the paper 'Deep residual learning for image recognition'?",
+    "answer": "The main contribution is the introduction of deep residual networks for image recognition tasks.",
+    "type": "factual"
+  },
+  {
+    "id": 104,
+    "question": "What is the dropout rate mentioned in the paper by Nitish Srivastava et al.?",
+    "answer": "The dropout rate is not specified in the provided excerpt.",
+    "type": "factual"
+  },
+  {
+    "id": 105,
+    "question": "How many pages does the paper 'Building a large annotated corpus of English: The Penn Treebank' span?",
+    "answer": "The paper spans pages 313\u2013330.",
+    "type": "numeric"
+  },
+  {
+    "id": 106,
+    "question": "What is the title of the paper that discusses 'Neural GPUs learn algorithms'?",
+    "answer": "The title is 'Neural GPUs learn algorithms'.",
+    "type": "factual"
+  },
+  {
+    "id": 107,
+    "question": "Which paper discusses the concept of 'self-training PCFG grammars with latent annotations across languages'?",
+    "answer": "The paper is authored by Zhongqiang Huang and Mary Harper.",
+    "type": "factual"
+  },
+  {
+    "id": 108,
+    "question": "What is the focus of the paper 'A deep reinforced model for abstractive summarization'?",
+    "answer": "The focus is on developing a deep reinforced model specifically for abstractive summarization tasks.",
+    "type": "factual"
+  },
+  {
+    "id": 109,
+    "question": "Compare the publication years of 'Long short-term memory' and 'Gradient flow in recurrent nets'.",
+    "answer": "'Long short-term memory' was published in 1997, while 'Gradient flow in recurrent nets' was published in 2001.",
+    "type": "comparative"
+  },
+  {
+    "id": 110,
+    "question": "What is the main topic of the paper 'Exploring the limits of language modeling'?",
+    "answer": "The main topic is the exploration of the capabilities and limitations of language modeling techniques.",
+    "type": "factual"
+  },
+  {
+    "id": 111,
+    "question": "What is the significance of the paper 'Using the output embedding to improve language models'?",
+    "answer": "The significance lies in its proposal to enhance language models by utilizing the output embedding.",
+    "type": "factual"
+  },
+  {
+    "id": 112,
+    "question": "What does the paper 'Neural machine translation in linear time' focus on?",
+    "answer": "It focuses on developing methods for neural machine translation that operate in linear time complexity.",
+    "type": "factual"
+  },
+  {
+    "id": 113,
+    "question": "What is the main contribution of the paper 'A structured self-attentive sentence embedding'?",
+    "answer": "The main contribution is the introduction of a structured self-attentive mechanism for sentence embeddings.",
+    "type": "factual"
+  },
+  {
+    "id": 114,
+    "question": "What is the primary method discussed in the paper by Oleksii Kuchaiev and Boris Ginsburg?",
+    "answer": "The primary method discussed is factorization tricks for LSTM networks.",
+    "type": "factual"
+  },
+  {
+    "id": 115,
+    "question": "What is the focus of the attention mechanism in layer 5 of the encoder?",
+    "answer": "The attention mechanism in layer 5 of the encoder focuses on long-distance dependencies, particularly attending to the verb 'making' in the phrase 'making...moredifficult'.",
+    "type": "factual"
+  },
+  {
+    "id": 116,
+    "question": "How many attention heads are mentioned in the excerpt?",
+    "answer": "The excerpt mentions two attention heads in layer 5 of the encoder.",
+    "type": "numeric"
+  },
+  {
+    "id": 117,
+    "question": "What does the different color in the attention visualizations represent?",
+    "answer": "Different colors in the attention visualizations represent different attention heads.",
+    "type": "definition"
+  },
+  {
+    "id": 118,
+    "question": "What is the purpose of the attention heads shown in Figure 4?",
+    "answer": "The attention heads shown in Figure 4 are involved in anaphora resolution.",
+    "type": "factual"
+  },
+  {
+    "id": 119,
+    "question": "What is indicated by the sharp attentions for the word 'its'?",
+    "answer": "The sharp attentions for the word 'its' indicate that the attention heads are focusing precisely on this word for anaphora resolution.",
+    "type": "analytical"
+  },
+  {
+    "id": 120,
+    "question": "What is the relationship between the verb 'making' and the phrase 'making...moredifficult'?",
+    "answer": "The verb 'making' is part of a long-distance dependency that completes the phrase 'making...moredifficult'.",
+    "type": "comparative"
+  }
+]

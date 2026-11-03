@@ -1,0 +1,122 @@
+[
+  {
+    "id": 121,
+    "question": "What type of visualizations are used to illustrate the attention mechanism?",
+    "answer": "The visualizations used to illustrate the attention mechanism are attention visualizations that show how different attention heads attend to specific words.",
+    "type": "definition"
+  },
+  {
+    "id": 122,
+    "question": "What does the term 'anaphora resolution' refer to in the context of the attention heads?",
+    "answer": "Anaphora resolution refers to the process of determining what a pronoun or a noun phrase refers to in a sentence, which is facilitated by the attention heads.",
+    "type": "definition"
+  },
+  {
+    "id": 123,
+    "question": "How are the attentions for head 5 and head 6 depicted in Figure 4?",
+    "answer": "The attentions for head 5 and head 6 are depicted with full attentions for head 5 and isolated attentions from just the word 'its' for both heads.",
+    "type": "factual"
+  },
+  {
+    "id": 124,
+    "question": "What does the excerpt suggest about the effectiveness of the attention heads for the word 'its'?",
+    "answer": "The excerpt suggests that the attentions are very sharp for the word 'its', indicating effective focus by the attention heads.",
+    "type": "analytical"
+  },
+  {
+    "id": 125,
+    "question": "What is the significance of the phrase 'making...moredifficult' in the context of attention heads?",
+    "answer": "The phrase 'making...moredifficult' illustrates how attention heads can capture long-distance dependencies in language processing.",
+    "type": "analytical"
+  },
+  {
+    "id": 126,
+    "question": "What layer of the encoder is being discussed in the provided excerpt?",
+    "answer": "The excerpt discusses layer 5 of the encoder.",
+    "type": "factual"
+  },
+  {
+    "id": 127,
+    "question": "What does the term 'attention heads' refer to?",
+    "answer": "Attention heads refer to the individual components of the attention mechanism that focus on different parts of the input sequence.",
+    "type": "definition"
+  },
+  {
+    "id": 128,
+    "question": "What visual representation is used to show the attention mechanism in the excerpt?",
+    "answer": "The attention mechanism is shown using visualizations that depict how attention heads focus on specific words in the input.",
+    "type": "definition"
+  },
+  {
+    "id": 129,
+    "question": "What is the main function of the attention mechanism as described in the excerpt?",
+    "answer": "The main function of the attention mechanism is to allow the model to focus on relevant parts of the input sequence, capturing dependencies between words.",
+    "type": "analytical"
+  },
+  {
+    "id": 130,
+    "question": "What does the excerpt imply about the complexity of the attention mechanism?",
+    "answer": "The excerpt implies that the attention mechanism is complex, as it involves multiple heads that can attend to different dependencies and aspects of the input.",
+    "type": "analytical"
+  },
+  {
+    "id": 131,
+    "question": "What is the role of colors in the attention visualizations?",
+    "answer": "Colors in the attention visualizations help differentiate between the various attention heads and their respective focuses.",
+    "type": "definition"
+  },
+  {
+    "id": 132,
+    "question": "What does the excerpt reveal about the attention mechanism's ability to handle dependencies?",
+    "answer": "The excerpt reveals that the attention mechanism is capable of handling long-distance dependencies effectively, as shown in the example with the verb 'making'.",
+    "type": "analytical"
+  },
+  {
+    "id": 133,
+    "question": "What is the significance of the word 'making' in the attention visualization?",
+    "answer": "The word 'making' is significant because it serves as a focal point for multiple attention heads that track its long-distance dependencies.",
+    "type": "analytical"
+  },
+  {
+    "id": 134,
+    "question": "What is the focus of the examples provided in Figure 5?",
+    "answer": "The examples in Figure 5 focus on the behavior of different attention heads related to the structure of the sentence.",
+    "type": "factual"
+  },
+  {
+    "id": 135,
+    "question": "How many layers are mentioned in the context of the encoder self-attention?",
+    "answer": "There are 6 layers mentioned in the context of the encoder self-attention.",
+    "type": "factual"
+  },
+  {
+    "id": 136,
+    "question": "What is the specific layer number from which the attention heads are taken in the examples?",
+    "answer": "The attention heads are taken from layer 5 of 6.",
+    "type": "factual"
+  },
+  {
+    "id": 137,
+    "question": "What do the attention heads in layer 5 of the encoder self-attention seem to learn?",
+    "answer": "The attention heads in layer 5 seem to learn to perform different tasks.",
+    "type": "factual"
+  },
+  {
+    "id": 138,
+    "question": "What type of behavior do many of the attention heads exhibit?",
+    "answer": "Many of the attention heads exhibit behavior that seems related to the structure of the sentence.",
+    "type": "factual"
+  },
+  {
+    "id": 139,
+    "question": "How many different heads are mentioned in the examples from the encoder self-attention?",
+    "answer": "Two different heads are mentioned in the examples from the encoder self-attention.",
+    "type": "factual"
+  },
+  {
+    "id": 140,
+    "question": "What is the relationship between the attention heads and the tasks they perform?",
+    "answer": "The attention heads clearly learned to perform different tasks, indicating a specialization in their functions.",
+    "type": "analytical"
+  }
+]
